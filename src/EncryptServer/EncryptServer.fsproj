@@ -5,7 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="CallerId.fs" />
+    <Compile Include="KeyId.fs" />
+    <Compile Include="Id.fs" />
+    <Compile Include="Identity.fs" />
+    <Compile Include="AssymetricEncryption.fs" />
+    <Compile Include="KeyRing.fs" />
+    <Compile Include="Login.fs" />
     <None Include="TestJson.fsx" />
     <None Include="TestEncrypt.fsx" />
   </ItemGroup>
