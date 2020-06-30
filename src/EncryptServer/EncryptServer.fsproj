@@ -5,8 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="CallerId.fs" />
-    <Compile Include="KeyId.fs" />
     <Compile Include="Id.fs" />
     <Compile Include="Identity.fs" />
     <Compile Include="AssymetricEncryption.fs" />
