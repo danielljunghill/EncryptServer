@@ -9,6 +9,7 @@
     <Compile Include="Identity.fs" />
     <Compile Include="AssymetricEncryption.fs" />
     <Compile Include="KeyRing.fs" />
+    <Compile Include="Json.fs" />
     <Compile Include="Login.fs" />
     <None Include="TestJson.fsx" />
     <None Include="TestEncrypt.fsx" />

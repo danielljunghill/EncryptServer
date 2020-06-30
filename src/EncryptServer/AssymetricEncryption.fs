@@ -2,7 +2,7 @@
 
 open System.Security.Cryptography
 open System
-open Newtonsoft.Json.Linq
+
 
 type PublicCsp = | PublicCsp of byte[]
 
@@ -46,13 +46,7 @@ module PublicCsp =
      let encrypt  =
          toProvider 
          >> fun provider -> fun bts -> provider.Encrypt(bts,false) |> AEV
-     module Json =
-        let private name = "PublicCsp"
-        let asJProperty pc =  JProperty(name, toB64String pc)
-        let fromJObject  =
-            fun (kr: JObject) -> kr.[name] 
-            >> string
-            >> fromB64String
+
 
 module KeyPairCsp =
     let toB64String =
@@ -70,12 +64,5 @@ module KeyPairCsp =
     let decrypt  =
         toProvider
         >> (fun provider -> (fun (AEV bts) -> provider.Decrypt(bts,false) |> ADV))
-    module Json =
-        let private name = "KeyPairCsp"
-        let asJProperty kp  =  JProperty(name, toB64String kp)
-        let fromJObject  =
-            fun (kr: JObject) -> kr.[name] 
-            >> string
-            >> fromB64String
 
 

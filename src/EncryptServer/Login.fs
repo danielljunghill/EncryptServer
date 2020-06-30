@@ -9,24 +9,6 @@ module Login =
             KeyRingId: KeyRingId // not encrypted
         }
 
-    module KeyRing =
-        
-
-    module LoginStartRequest =
-          let private keyRingId = "KeyRingId"
-          let toJson (loginStartRequest: LoginStartRequest) = 
-                let (KeyRingId id) = loginStartRequest.KeyRingId
-                new JObject(
-                    JProperty("KeyRingId", Id.toBase64String id)
-                ) 
-                
-          let fromJson json =
-                let kr = JObject.Parse(json)
-                let keyRingId = 
-                    kr.[keyRingId] |> string
-                    |> Id.fromBase64String 
-                    |> KeyRingId
-                { KeyRingId = keyRingId }
 
     type LoginId = LoginId of Id
        
@@ -37,11 +19,11 @@ module Login =
             TimeStamp: DateTime
         }
 
-    module LoginStartResponse = 
-        let private LoginId = "KeyRingId"
-        let private keyRingId = "KeyRingId"
-        let private TimeStamp = "KeyRingId"
-        let toSendJson
+    //module LoginStartResponse = 
+    //    let private LoginId = "KeyRingId"
+    //    let private keyRingId = "KeyRingId"
+    //    let private TimeStamp = "KeyRingId"
+    //    let toSendJson
         
     type LoginFinishRequest = //encrypted för server and signed by client
         {

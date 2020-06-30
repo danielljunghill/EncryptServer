@@ -45,42 +45,47 @@ let aes1 = Aes.Create()
 let key = aes1.Key
 let iv = aes1.IV
 
-
-let encrypt key iv bts =
+let createAes key iv =
     let aes = Aes.Create()
+    aes.KeySize <- 256
+    aes.BlockSize <- 128
+    aes.FeedbackSize <- 128
+    aes.Padding <- PaddingMode.Zeros  
     aes.IV <- iv
     aes.Key <- key
-    aes.Padding <- PaddingMode.None
-    let ict = aes.CreateEncryptor(key,iv)
-   
+    aes
+
+let decryptEncrypt ict bts =
     use ms = new MemoryStream()
     use cs = new CryptoStream(ms,ict,CryptoStreamMode.Write)
     cs.Write(bts,0,bts.Length)
     cs.FlushFinalBlock()
     ms.ToArray()
 
-let decrypt key iv (encBts:byte[]) =
-    let aes = Aes.Create()
-    aes.IV <- iv
-    aes.Key <- key
-    aes.Padding <- PaddingMode.None
-    let ict = aes.CreateDecryptor(key,iv)
-    use ms = new MemoryStream()
-    use cs = new CryptoStream(ms,ict,CryptoStreamMode.Write)
-    cs.Write(encBts,0,encBts.Length)
-    cs.FlushFinalBlock()
 
-    ms.ToArray()
+let encrypt key iv (bts:byte[]) =
+    let aes = createAes key iv  
+    let ict = aes.CreateEncryptor(key,iv) 
+    decryptEncrypt ict bts
+
+let decrypt key iv (encBts:byte[]) =
+    let aes = createAes key iv 
+ 
+    let ict = aes.CreateDecryptor(key,iv)
+    decryptEncrypt ict encBts
+  
 let encryptor = encrypt key iv
 let decryptor = decrypt key iv 
 
 let bts = System.Text.Encoding.UTF8.GetBytes("skdnöalskndöalskndölkasndlökadnö")
+bts.Length 
 let encBts = encryptor bts
+encBts.Length
 let decBts = decryptor encBts 
 
 
 
-ase.CreateEncryptor()
+
 
     
 
