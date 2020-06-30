@@ -24,9 +24,11 @@ type KeyRing =
 
 module KeyRing =
     module Json =
-        let asJObject (kr: KeyRing) = 
+        let asJObject encryptor (kr: KeyRing) = 
             let keyRingId = KeyRingId.Json.asJProperty kr.KeyRingId
-            let KeyPairCsp encryptor = 
+            let KeyPairCspEncrypt (KeyPairCsp bts) encryptor = 
+                let (encryptedValue: byte[]) = encryptor bts
+
         
        
 
