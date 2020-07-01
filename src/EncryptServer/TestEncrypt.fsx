@@ -1,5 +1,10 @@
 ﻿
 #load "Id.fs"
+open System
+open System.Security.Cryptography
+open System.Xml.Serialization
+open System.IO
+open System.IO
 //#load "Identity.fs"
 //#load "AssymetricEncryption.fs"
 
@@ -41,34 +46,18 @@ module BytesForSymmetricEncryption =
         >> Array.concat
         >> BytesForSymmetricEncryption
 
-        
 
 module SymmecricDecryptedBytes =
     let private getLength bts =
         BitConverter.ToInt32(bts,0), bts
-    let private getByteArray' (len,(bts:byte[]) )  =
+    let private getByteArray' (len,(bts:byte[]))  =
         Array.sub bts 4 len
     let create  = 
         getLength
         >> getByteArray'
         >> SymmecricDecryptedBytes
 
-//let newId = Id.create()
-//let idTob64 = Id.toBase64String newId
-//printfn "%i" idTob64.Length
-//let idFromb64 = Id.fromBase64String idTob64
-//login
-
-//skapa publik och private nyckel med id kopplad till detta och till login alt annat id
-//användare behöver nyckel och id -> base64 sträng
-open System
-open System.Security.Cryptography
-open System.Xml.Serialization
-open System.IO
-open System.IO
-
-
-let cr f = f()
+let ce f a = f(a)
 
 type Key = private | Key of byte[]
 module Key =
@@ -122,13 +111,13 @@ module Aes =
         >> Encryptor.create key iv
         >> Encryptor.encrypt bfs
         >> SymmetricEncryptedBytes
-        |> cr
+        |> ce
 
     let decrypt key iv bfs =
         newAes
         >> Decryptor.create key iv
         >> Decryptor.decrypt bfs
-        |> cr
+        |> ce
 
 let key,iv = Aes.newKeys()
 let encryptor' = Aes.encrypt key iv
