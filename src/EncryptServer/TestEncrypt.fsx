@@ -57,7 +57,7 @@ module SymmecricDecryptedBytes =
         >> getByteArray'
         >> SymmecricDecryptedBytes
 
-let ce f a = f(a)
+let ce f  = f()
 
 type Key = private | Key of byte[]
 module Key =
