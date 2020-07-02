@@ -19,7 +19,9 @@ let decryptedBts = decryptor aev |> AssymetricDecryptedBytes.toByteArray
 let decryptedStr = System.Text.Encoding.UTF8.GetString(decryptedBts)
 
 let stringToSign = StringToSing.create "Test av signering @ 1223"
+let stringToSign2 = StringToSing.create "Test av signering @ 1223s"
 
-EncryptCore.AssymetricEncryption.Sign.string stringToSign priv
-
+let signedbts = Signature.Sign.string priv stringToSign 
+let verifiedResult = Signature.Verify.string pub stringToSign signedbts
+let verifiedResult2 = Signature.Verify.string pub stringToSign2 signedbts
 

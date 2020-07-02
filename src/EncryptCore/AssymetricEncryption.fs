@@ -82,17 +82,19 @@ type SignedData = private | SignedData of byte[]
 module SignedData =
     let toByteArray (SignedData bts) =  bts
     
-module Sign =
-    let string keypair stringToSing  =
-        let rsaAlg = KeyPairCsp.toRsaAlg keypair
-        StringToSing.toByteArray 
-        >> (fun bts -> rsaAlg.SignData(bts, new SHA512CryptoServiceProvider()))
-        |> cev stringToSing
-        |> SignedData
+module Signature =
+    module Sign =
+        let string keypair stringToSing  =
+            let rsaAlg = KeyPairCsp.toRsaAlg keypair
+            StringToSing.toByteArray 
+            >> (fun bts -> rsaAlg.SignData(bts, new SHA512CryptoServiceProvider()))
+            |> cev stringToSing
+            |> SignedData
 
-    let verifyString publicCsp originalString signedData   =
-        let rsaAlg = PublicCsp.toRsaAlg publicCsp
-        let verifyData signedData originalString =
-            rsaAlg.VerifyData(StringToSing.toByteArray originalString, new SHA512CryptoServiceProvider(), SignedData.toByteArray signedData)
-        verifyData signedData originalString
+    module Verify =
+        let string publicCsp originalString signedData   =
+            let rsaAlg = PublicCsp.toRsaAlg publicCsp
+            let verifyData signedData originalString =
+                rsaAlg.VerifyData(StringToSing.toByteArray originalString, new SHA512CryptoServiceProvider(), SignedData.toByteArray signedData)
+            verifyData signedData originalString
 
