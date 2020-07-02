@@ -56,8 +56,10 @@ module SymmecricDecryptedBytes =
         getLength
         >> getByteArray'
         >> SymmecricDecryptedBytes
+    let toByteArray (SymmecricDecryptedBytes bts) = bts
 
 let ce f  = f()
+let cev a f = f(a)
 
 type Key = private | Key of byte[]
 module Key =
@@ -117,7 +119,7 @@ module Aes =
         newAes
         >> Decryptor.create key iv
         >> Decryptor.decrypt bfs
-        |> ce
+        |> ce 
 
 let key,iv = Aes.newKeys()
 let encryptor' = Aes.encrypt key iv
@@ -130,14 +132,35 @@ let seb = entryptor bts
 let decBts = decryptor' seb
 
 
-module Password =
-    let createSalt length =
+
+type Salt = private | Salt of byte[]
+module Salt =
+    let toByteArray (Salt bts) = bts
+    let create length =
         let bts = Array.zeroCreate<byte> length
         let rand = new RNGCryptoServiceProvider()
         rand.GetBytes(bts)
-        bts
+        Salt bts
 
-    let getPasswordDeriveBytes salt (pwd: string) =
+type KeySize = private | KeySize of int
+module KeySize =
+    let toInt (KeySize size) = size
+    let key128 = KeySize 128
+    let key256 = KeySize 256
+
+module SymmetricAesAlgorithm =
+    let create size =
+        SymmetricAlgorithm.Create "AES"
+        |> fun alg -> 
+            alg.KeySize <- KeySize.toInt size
+            alg
+       
+type Password = private | Password of string
+
+module Password =
+   
+    let create = Password
+    let getPasswordDeriveBytes salt (Password pwd) =
         let pwdBts = System.Text.Encoding.Unicode.GetBytes(pwd) 
         let tdes = new TripleDESCryptoServiceProvider()
         let pdb = new PasswordDeriveBytes(pwd,salt,"SHA512",10)
@@ -147,25 +170,36 @@ module Password =
     //    let pdb = getPasswordDeriveBytes salt pwd
     //    aes.Key <- pdb.CryptDeriveKey("AES","SHA1",256,aes.IV)
 
-    let getKeyAndIVFromPassword (algorithm: SymmetricAlgorithm) (salt: byte[]) pwd =
-         let rfc2898DeriveBytes = new Rfc2898DeriveBytes(pwd, salt);
+    let private getKeyFromPassword' (algorithm: SymmetricAlgorithm) (salt: Salt) (Password pwd) =
+         let rfc2898DeriveBytes = new Rfc2898DeriveBytes(pwd, Salt.toByteArray salt);
          let key = rfc2898DeriveBytes.GetBytes(algorithm.KeySize / 8);
          let iv =  rfc2898DeriveBytes.GetBytes(algorithm.BlockSize / 8); 
-         key,iv  
+         Key key,IV iv  
 
-let salt = Password.createSalt 128
-let alg = (SymmetricAlgorithm.Create("AES"))
-alg.KeySize <-256
+    let getAesKeyFromPassword  = SymmetricAesAlgorithm.create >> getKeyFromPassword' 
 
-let pwdkey,pwdIv = Password.getKeyAndIVFromPassword alg  salt "Kakadua12"
-let encryptorPwd = encrypt pwdkey pwdIv
+let salt = Salt.create 128
+let pwd = Password.create "FarfarsKalsonger@666"
 
-let testBts = strToBytes "Testing decryption"
-let testBtsEncrypted = encryptorPwd testBts
-let pwdkey2,pwdIv2 = Password.getKeyAndIVFromPassword alg  salt "Kakadua12"
-let decryptorPwd = decrypt pwdkey2 pwdIv2
-let testBtsDecrypted = decryptorPwd testBtsEncrypted
-let testStringDecrypted = bytesToString testBtsDecrypted
+let pwdEncryptor salt pwd = 
+    let key,iv = Password.getAesKeyFromPassword KeySize.key256  salt  pwd
+    strToBytes 
+    >> BytesForSymmetricEncryption.create 
+    >> Aes.encrypt key iv
+let pwdDecryptor salt pwd bts = 
+    let key,iv = Password.getAesKeyFromPassword KeySize.key256  salt  pwd
+    Aes.decrypt key iv bts
+
+
+
+let pwdEncryptedString = "Ett test av kyptering med password" |> pwdEncryptor salt pwd
+let pwdDecryptedString = 
+    pwdEncryptedString 
+    |> pwdDecryptor salt pwd
+    |> SymmecricDecryptedBytes.toByteArray
+    |> bytesToString
+
+
     
 
 
