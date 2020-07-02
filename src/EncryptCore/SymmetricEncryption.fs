@@ -2,12 +2,7 @@
 open System
 open System.IO
 open System.Security.Cryptography
-
-module Fsharp =
-    let ce f  = f()
-    let cev a f = f(a)
-
-open Fsharp
+open EncryptCore.Fsharp
 
 type BytesForSymmetricEncryption = private | BytesForSymmetricEncryption of byte[]
 type SymmetricEncryptedBytes = private | SymmetricEncryptedBytes of byte[]
@@ -82,7 +77,7 @@ module Aes =
         >> Encryptor.create key iv
         >> Encryptor.encrypt bfs
         >> SymmetricEncryptedBytes
-        |> ce
+        |> cev
 
     let decrypt key iv bfs =
         newAes

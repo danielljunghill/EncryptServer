@@ -1,11 +1,12 @@
 ﻿namespace EncryptCore.AssymetricEncryption
+open EncryptCore
 open System.Security.Cryptography
+open EncryptCore.Fsharp
 open System
 
-type PublicCsp = | PublicCsp of byte[]
+type PublicCsp =  private| PublicCsp of byte[]
 
-type KeyPairCsp = 
-    | KeyPairCsp of byte[]
+type  KeyPairCsp = private | KeyPairCsp of byte[]
 
 type AssymetricDecryptedBytes = private | AssymetricDecryptedBytes of byte[]
 module AssymetricDecryptedBytes =
@@ -20,6 +21,10 @@ module AssymetricEncryptedBytes =
         >> AssymetricEncryptedBytes
     let toByteArray (AssymetricEncryptedBytes bts) = bts
 
+type ExportKeyParameter = 
+    | IncludePublicKeyOnly 
+    | IncludeBoth 
+
 module RSACryptoServiceProvider =
     let create() =
         new RSACryptoServiceProvider()
@@ -30,6 +35,12 @@ module RSACryptoServiceProvider =
         let provider = create()
         provider.ImportCspBlob(keyBlob)
         provider
+    let exportParameter param (rsAlg: RSACryptoServiceProvider)  =
+        match param with
+        | IncludePublicKeyOnly ->
+            rsAlg.ExportParameters(false)
+        | IncludeBoth ->
+            rsAlg.ExportParameters(true)
 
 module PublicCsp =
      let toB64String  =
@@ -37,11 +48,11 @@ module PublicCsp =
      let fromB64String =
           Convert.FromBase64String 
           >> PublicCsp 
-     let toProvider  =
+     let toRsaAlg  =
           fun (PublicCsp blob) -> RSACryptoServiceProvider.importCsaBlob blob
      let encrypt  =
-         toProvider 
-         >> fun provider -> fun bts -> provider.Encrypt(bts,false) |> AssymetricEncryptedBytes
+         toRsaAlg 
+         >> fun rsaAlg -> fun bts -> rsaAlg.Encrypt(bts,false) |> AssymetricEncryptedBytes
 
 module KeyPairCsp =
     let toB64String =
@@ -52,12 +63,36 @@ module KeyPairCsp =
         >> KeyPairCsp
     let toPublicCsp  =
          (fun (KeyPairCsp blob) -> RSACryptoServiceProvider.importCsaBlob blob)  
-         >> (fun provider -> provider.ExportCspBlob(false)) 
+         >> (fun rsaAlg -> rsaAlg.ExportCspBlob(false)) 
          >> PublicCsp
-    let toProvider  =
+    let toRsaAlg  =
          fun (KeyPairCsp blob) ->  RSACryptoServiceProvider.importCsaBlob blob
     let decrypt  =
-        toProvider
-        >> (fun provider -> (fun (AssymetricEncryptedBytes bts) -> provider.Decrypt(bts,false) |> AssymetricDecryptedBytes))
+        toRsaAlg
+        >> (fun rsaAlg -> (fun (AssymetricEncryptedBytes bts) -> rsaAlg.Decrypt(bts,false) |> AssymetricDecryptedBytes))
 
+
+
+type StringToSign = private | StringToSign of string
+module StringToSing =
+    let toByteArray (StringToSign str) = String.toByteArray str
+    let create = StringToSign
+
+type SignedData = private | SignedData of byte[]
+module SignedData =
+    let toByteArray (SignedData bts) =  bts
+    
+module Sign =
+    let string keypair stringToSing  =
+        let rsaAlg = KeyPairCsp.toRsaAlg keypair
+        StringToSing.toByteArray 
+        >> (fun bts -> rsaAlg.SignData(bts, new SHA512CryptoServiceProvider()))
+        |> cev stringToSing
+        |> SignedData
+
+    let verifyString publicCsp originalString signedData   =
+        let rsaAlg = PublicCsp.toRsaAlg publicCsp
+        let verifyData signedData originalString =
+            rsaAlg.VerifyData(StringToSing.toByteArray originalString, new SHA512CryptoServiceProvider(), SignedData.toByteArray signedData)
+        verifyData signedData originalString
 

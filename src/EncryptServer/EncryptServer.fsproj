@@ -7,18 +7,19 @@
   <ItemGroup>
     <Compile Include="Id.fs" />
     <Compile Include="Identity.fs" />
-    <Compile Include="SymmetricEncryption.fs" />
-    <Compile Include="AssymetricEncryption.fs" />
     <Compile Include="Keyring.fs" />
     <Compile Include="Json.fs" />
     <Compile Include="Register.fs" />
     <Compile Include="Login.fs" />
     <None Include="TestJson.fsx" />
-    <None Include="TestEncrypt.fsx" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EncryptCore\EncryptCore.fsproj" />
   </ItemGroup>
 
 </Project>

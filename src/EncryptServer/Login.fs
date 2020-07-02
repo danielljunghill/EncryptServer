@@ -1,5 +1,5 @@
 ﻿namespace EncryptServer
-open EncryptServer.AssymetricEncryption
+open EncryptCore.AssymetricEncryption
 open System
 open Newtonsoft.Json.Linq
 

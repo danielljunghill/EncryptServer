@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Fsharp.fs" />
     <Compile Include="ByteArray.fs" />
     <Compile Include="String.fs" />
     <Compile Include="AssymetricEncryption.fs" />
