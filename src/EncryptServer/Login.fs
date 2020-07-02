@@ -8,7 +8,11 @@ module Login =
         {
             KeyRingId: KeyRingId // not encrypted
         }
-
+    
+    type LoginStartEnvelop =
+        {
+            KeyRingId: string //base64 representation av KeyRingId (KeyIdentity)
+        }
 
     type LoginId = LoginId of Id
        
@@ -18,16 +22,23 @@ module Login =
             KeyRingId: KeyRingId //
             TimeStamp: DateTime
         }
+    type LoginStartResponseEnvelope =
+        {
+            LoginStartResponse : string  //enncrypted for client string of LoginStartResponse
+            signature: string //base64string of sign of startresponse non encrypted
 
-    //module LoginStartResponse = 
-    //    let private LoginId = "KeyRingId"
-    //    let private keyRingId = "KeyRingId"
-    //    let private TimeStamp = "KeyRingId"
-    //    let toSendJson
+        }
+
         
     type LoginFinishRequest = //encrypted för server and signed by client
         {
             startResponse: LoginStartResponse 
+        }
+
+    type LoginFinishRequestEnvelope = 
+        {
+            startResponseEnvelope: string //base64 of startResponse envelope
+            signature: string //base64 signature for startResponse
         }
     type LoginFinishResponse =
         {

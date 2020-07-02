@@ -1,40 +1,13 @@
-﻿
-#load "Id.fs"
+﻿namespace EncryptCore.SymmetricEncryption
 open System
+open System.IO
 open System.Security.Cryptography
-open System.Xml.Serialization
-open System.IO
-open System.IO
-//#load "Identity.fs"
-//#load "AssymetricEncryption.fs"
 
+module Fsharp =
+    let ce f  = f()
+    let cev a f = f(a)
 
-
-
-
-// open EncryptServer.AssymetricEncryption
-// open EncryptServer
-
-////TEST *****************
-//let pub,priv = RSACryptoServiceProvider.createRsaKeyPair()
-
-
-//let str = "Detta är ett test" 
-//let btsString = System.Text.Encoding.UTF8.GetBytes(str);
-
-//let encryptor = PublicCsp.encrypt pub
-//let decryptor = KeyPairCsp.decrypt priv
-
-//let aev = encryptor btsString
-//let (ADV decryptedBts) = decryptor aev
-//let decryptedStr = System.Text.Encoding.UTF8.GetString(decryptedBts)
-////******************* TEST
-open System
-let strToBytes (s: string)=
-    System.Text.Encoding.UTF8.GetBytes(s)
-
-let bytesToString (bts: byte[]) =
-    System.Text.Encoding.UTF8.GetString(bts)
+open Fsharp
 
 type BytesForSymmetricEncryption = private | BytesForSymmetricEncryption of byte[]
 type SymmetricEncryptedBytes = private | SymmetricEncryptedBytes of byte[]
@@ -46,7 +19,6 @@ module BytesForSymmetricEncryption =
         >> Array.concat
         >> BytesForSymmetricEncryption
 
-
 module SymmecricDecryptedBytes =
     let private getLength bts =
         BitConverter.ToInt32(bts,0), bts
@@ -57,9 +29,6 @@ module SymmecricDecryptedBytes =
         >> getByteArray'
         >> SymmecricDecryptedBytes
     let toByteArray (SymmecricDecryptedBytes bts) = bts
-
-let ce f  = f()
-let cev a f = f(a)
 
 type Key = private | Key of byte[]
 module Key =
@@ -121,18 +90,6 @@ module Aes =
         >> Decryptor.decrypt bfs
         |> ce 
 
-let key,iv = Aes.newKeys()
-let encryptor' = Aes.encrypt key iv
-let decryptor' = Aes.decrypt key iv 
-
-let bts = System.Text.Encoding.UTF8.GetBytes("skdnöalskndöalskndölkasndlökadnö")
-bts.Length 
-let entryptor =  BytesForSymmetricEncryption.create >> encryptor'
-let seb = entryptor bts
-let decBts = decryptor' seb
-
-
-
 type Salt = private | Salt of byte[]
 module Salt =
     let toByteArray (Salt bts) = bts
@@ -156,7 +113,6 @@ module SymmetricAesAlgorithm =
             alg
        
 type Password = private | Password of string
-
 module Password =
    
     let create = Password
@@ -178,27 +134,7 @@ module Password =
 
     let getAesKeyFromPassword  = SymmetricAesAlgorithm.create >> getKeyFromPassword' 
 
-let salt = Salt.create 128
-let pwd = Password.create "FarfarsKalsonger@666"
 
-let pwdEncryptor salt pwd = 
-    let key,iv = Password.getAesKeyFromPassword KeySize.key256  salt  pwd
-    strToBytes 
-    >> BytesForSymmetricEncryption.create 
-    >> Aes.encrypt key iv
-let pwdDecryptor salt pwd bts = 
-    let key,iv = Password.getAesKeyFromPassword KeySize.key256  salt  pwd
-    Aes.decrypt key iv bts
-
-
-
-let pwdEncryptedString = "Ett test av kyptering med password" |> pwdEncryptor salt pwd
-
-let pwdDecryptedString = 
-    pwdEncryptedString 
-    |> pwdDecryptor salt pwd
-    |> SymmecricDecryptedBytes.toByteArray
-    |> bytesToString
 
 
     

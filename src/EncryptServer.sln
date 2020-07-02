@@ -7,6 +7,10 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "EncryptServer", "EncryptSer
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "EncryptServerConsole", "EncryptServerConsole\EncryptServerConsole.fsproj", "{E278F71B-D9AC-4D0E-8081-93FD24B96F7D}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EncryptCore.Test", "EncryptCore.Test\EncryptCore.Test.fsproj", "{D37FAA7D-06E9-4FB4-AE41-A87E85CD5F3F}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EncryptCore", "EncryptCore\EncryptCore.fsproj", "{1780B51F-621F-4FAE-B538-F7019BA2484A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{E278F71B-D9AC-4D0E-8081-93FD24B96F7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E278F71B-D9AC-4D0E-8081-93FD24B96F7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E278F71B-D9AC-4D0E-8081-93FD24B96F7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D37FAA7D-06E9-4FB4-AE41-A87E85CD5F3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D37FAA7D-06E9-4FB4-AE41-A87E85CD5F3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D37FAA7D-06E9-4FB4-AE41-A87E85CD5F3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D37FAA7D-06E9-4FB4-AE41-A87E85CD5F3F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1780B51F-621F-4FAE-B538-F7019BA2484A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1780B51F-621F-4FAE-B538-F7019BA2484A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1780B51F-621F-4FAE-B538-F7019BA2484A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1780B51F-621F-4FAE-B538-F7019BA2484A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

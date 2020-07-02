@@ -5,8 +5,6 @@ open System
 
 type KeyRingId = KeyRingId of Id
 
-
-
 type KeyRing =
     {
         KeyRingId: KeyRingId
@@ -19,7 +17,8 @@ type KeyRing =
 //        let asJObject encryptor (kr: KeyRing) = 
 //            let keyRingId = KeyRingId.Json.asJProperty kr.KeyRingId
 //            let KeyPairCspEncrypt (KeyPairCsp bts) encryptor = 
-//                let (encryptedValue: byte[]) = encryptor bts       
+//                let (encryptedValue: byte[]) = encryptor bts
+       
        
 
 type ServerKeyRing = ServerKeyRing of KeyRing

@@ -1,19 +1,18 @@
-﻿namespace EncryptServer.AssymetricEncryption
+﻿namespace EncryptCore.AssymetricEncryption
 open System.Security.Cryptography
 open System
-
 
 type PublicCsp = | PublicCsp of byte[]
 
 type KeyPairCsp = 
     | KeyPairCsp of byte[]
 
-//Assymetric encrypted bytes
-type AssymetricEncryptedBytes  = private | AssymetricEncryptedBytes of byte[]
-//Assymetric decrypted bytes
 type AssymetricDecryptedBytes = private | AssymetricDecryptedBytes of byte[]
+module AssymetricDecryptedBytes =
+    let toByteArray (AssymetricDecryptedBytes bts) = bts
 
-module AEV =
+type AssymetricEncryptedBytes  = private | AssymetricEncryptedBytes of byte[]
+module AssymetricEncryptedBytes =
     let toB64String  =
         fun (AssymetricEncryptedBytes bts) -> Convert.ToBase64String bts
     let fromB64String =
