@@ -57,7 +57,6 @@ module PublicCsp =
 module KeyPairCsp =
     let toB64String =
         fun (KeyPairCsp blob) -> Convert.ToBase64String(blob)   
- 
     let fromB64String =
         Convert.FromBase64String
         >> KeyPairCsp
@@ -73,10 +72,11 @@ module KeyPairCsp =
 
 
 
-type StringToSign = private | StringToSign of string
-module StringToSing =
-    let toByteArray (StringToSign str) = String.toByteArray str
-    let create = StringToSign
+
+type BytesToSign = private | BytesToSign of byte[]
+module BytesToSign =
+    let create = BytesToSign
+    let toByteArray (BytesToSign bts) = bts
 
 type SignedData = private | SignedData of byte[]
 module SignedData =
@@ -84,17 +84,15 @@ module SignedData =
     
 module Signature =
     module Sign =
-        let string keypair stringToSing  =
-            let rsaAlg = KeyPairCsp.toRsaAlg keypair
-            StringToSing.toByteArray 
-            >> (fun bts -> rsaAlg.SignData(bts, new SHA512CryptoServiceProvider()))
-            |> cev stringToSing
+        let byteArray keyPair bytesToSign  =
+            let rsaAlg = KeyPairCsp.toRsaAlg keyPair
+            rsaAlg.SignData(BytesToSign.toByteArray bytesToSign, new SHA512CryptoServiceProvider())
             |> SignedData
 
     module Verify =
-        let string publicCsp originalString signedData   =
-            let rsaAlg = PublicCsp.toRsaAlg publicCsp
-            let verifyData signedData originalString =
-                rsaAlg.VerifyData(StringToSing.toByteArray originalString, new SHA512CryptoServiceProvider(), SignedData.toByteArray signedData)
-            verifyData signedData originalString
+        let byteArray  =
+            let verifyData (rsaAlg:RSACryptoServiceProvider) signedData (BytesToSign bts) =
+                rsaAlg.VerifyData(bts, new SHA512CryptoServiceProvider(), SignedData.toByteArray signedData)
+            PublicCsp.toRsaAlg 
+            >> verifyData  
 

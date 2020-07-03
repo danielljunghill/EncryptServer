@@ -4,7 +4,8 @@
 #load "AssymetricEncryption.fs"
 
 open EncryptCore.AssymetricEncryption
-
+open EncryptCore
+open Fsharp
 let pub,priv = RSACryptoServiceProvider.createRsaKeyPair()
 
 
@@ -18,10 +19,11 @@ let aev = encryptor btsString
 let decryptedBts = decryptor aev |> AssymetricDecryptedBytes.toByteArray
 let decryptedStr = System.Text.Encoding.UTF8.GetString(decryptedBts)
 
-let stringToSign = StringToSing.create "Test av signering @ 1223"
-let stringToSign2 = StringToSing.create "Test av signering @ 1223s"
+let stringToSign = String.toByteArray >> BytesToSign.create 
+let stringToSign1 = stringToSign "Ett test för alla oss galningar 1"
+let stringToSign2 = stringToSign "Ett test för alla oss galningar 2"
 
-let signedbts = Signature.Sign.string priv stringToSign 
-let verifiedResult = Signature.Verify.string pub stringToSign signedbts
-let verifiedResult2 = Signature.Verify.string pub stringToSign2 signedbts
+let signedbts = Signature.Sign.byteArray priv stringToSign1
+let verifiedResult = Signature.Verify.byteArray pub signedbts stringToSign1
+let verifiedResult2 = Signature.Verify.byteArray pub signedbts stringToSign2
 
