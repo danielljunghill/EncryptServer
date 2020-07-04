@@ -34,6 +34,11 @@ module IV =
     let toByteArray (IV bts) = bts
 
 type Encryptor = private | Encryptor of ICryptoTransform
+
+
+type EncryptedFile = EncryptedFile of string * string
+type DecryptedFile = DecryptedFile of string * string
+
 module Encryptor =
     let create (Key key) (IV iv) (aes: Aes) =
         aes.CreateEncryptor(key,iv) |> Encryptor
@@ -52,6 +57,18 @@ module Encryptor =
             sr.CopyTo (cs)
             cs.FlushFinalBlock()
             new MemoryStream(ms.ToArray())  :> Stream
+
+    module FileStream =
+        let encrypt  (sr: Stream) (EncryptedFile (path,name)) (Encryptor ict)  =
+            sr.Position <- 0L
+            let fn = Path.Combine(path, sprintf "%s.%s" name "aes")
+            use fsEncrypted = File.OpenWrite(fn)
+            use cs = new CryptoStream(fsEncrypted,ict,CryptoStreamMode.Write) 
+            sr.CopyTo (cs)
+            cs.FlushFinalBlock()
+            fsEncrypted.Close()
+           
+
     
 type Decryptor = private | Decryptor of ICryptoTransform
 module Decryptor=
@@ -74,12 +91,13 @@ module Decryptor=
             use cs = new CryptoStream(sr,ict,CryptoStreamMode.Read)
             cs.CopyTo(ms)
             new MemoryStream(ms.ToArray()) :> Stream
-            //let decrypted = Array.zeroCreate<byte> bts.Length
-            //let bytesRead = cs.Read(decrypted,0,bts.Length)
-            //decrypted 
-            //|> Array.take bytesRead
-            //|> SymmecricDecryptedBytes.create
-
+       
+    module FileStream =
+        let decrypt (sr: Stream) (DecryptedFile (path,name)) (Decryptor ict)  =
+            use fsDecrypt = File.OpenWrite(Path.Combine(path, sprintf "%s" name))
+            use cs = new CryptoStream(sr,ict,CryptoStreamMode.Read) 
+            cs.CopyTo (fsDecrypt)
+            //cs.FlushFinalBlock()
 
 module Aes =
     let newAes() =
@@ -118,6 +136,19 @@ module Aes =
         newAes
         >> Decryptor.create key iv
         >> Decryptor.Stream.decrypt bfs
+        |> ce 
+
+
+    let encryptStreamToFile key iv sr encryptDestination =
+        newAes
+        >> Encryptor.create key iv
+        >> Encryptor.FileStream.encrypt sr encryptDestination
+        |> ce
+
+    let decryptStreamToFile key iv sr decryptDestination =
+        newAes
+        >> Decryptor.create key iv 
+        >> Decryptor.FileStream.decrypt sr decryptDestination
         |> ce 
 
 type Salt = private | Salt of byte[]
