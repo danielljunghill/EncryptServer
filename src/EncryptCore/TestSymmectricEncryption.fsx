@@ -51,11 +51,11 @@ msDecrypted.CopyTo(fsDecrypted)
 fsDecrypted.Close()
 
 
-let fsEncrypt = Aes.encryptStreamToFile key iv fs (EncryptedFile (@"c:\temp","framochtillbaka7_encrypted"))
+let fsEncrypt = Aes.encryptStreamToFile key iv fs (EncryptedFile (@"c:\temp","framochtillbaka8_encrypted"))
 
-let fsEncrypted = File.OpenRead(@"c:\temp\framochtillbaka7_encrypted.aes")
+let fsEncrypted = File.OpenRead(@"c:\temp\framochtillbaka8_encrypted.aes")
 
-Aes.decryptStreamToFile key iv fsEncrypted (DecryptedFile (@"c:\temp","framochtillbaka7decrypted.txt"))
+Aes.decryptStreamToFile key iv fsEncrypted (DecryptedFile (@"c:\temp","framochtillbaka8decrypted.txt"))
 
 fsEncrypted.Close()
 //let msDecrypted = Aes.decryptStream key iv msEncrypted
