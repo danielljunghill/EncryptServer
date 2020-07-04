@@ -8,10 +8,12 @@
     <Compile Include="Fsharp.fs" />
     <Compile Include="ByteArray.fs" />
     <Compile Include="String.fs" />
+    <Compile Include="Hash.fs" />
     <Compile Include="AssymetricEncryption.fs" />
     <Compile Include="SymmetricEncryption.fs" />
     <None Include="TestAssymetricEncryption.fsx" />
     <None Include="TestSymmectricEncryption.fsx" />
+    <Compile Include="HashTest.fsx" />
   </ItemGroup>
 
   <ItemGroup />

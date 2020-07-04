@@ -37,27 +37,49 @@ type Encryptor = private | Encryptor of ICryptoTransform
 module Encryptor =
     let create (Key key) (IV iv) (aes: Aes) =
         aes.CreateEncryptor(key,iv) |> Encryptor
+    module ByteArray = 
+        let encrypt (BytesForSymmetricEncryption bts) (Encryptor ict)   =
+            use ms = new MemoryStream()
+            use cs = new CryptoStream(ms,ict,CryptoStreamMode.Write)
+            cs.Write(bts,0,bts.Length)
+            cs.FlushFinalBlock()
+            ms.ToArray() 
 
-    let encrypt (BytesForSymmetricEncryption bts) (Encryptor ict)   =
-        use ms = new MemoryStream()
-        use cs = new CryptoStream(ms,ict,CryptoStreamMode.Write)
-        cs.Write(bts,0,bts.Length)
-        cs.FlushFinalBlock()
-        ms.ToArray() 
+    module Stream =
+        let encrypt (sr: Stream) (Encryptor ict) =
+            use ms = new MemoryStream()
+            use cs = new CryptoStream(ms,ict,CryptoStreamMode.Write) 
+            sr.CopyTo (cs)
+            cs.FlushFinalBlock()
+            new MemoryStream(ms.ToArray())  :> Stream
     
 type Decryptor = private | Decryptor of ICryptoTransform
 module Decryptor=
     let create (Key key) (IV iv) (aes: Aes) =
         aes.CreateDecryptor(key,iv)  |> Decryptor
+    module ByteArray = 
+        let decrypt (SymmetricEncryptedBytes bts) (Decryptor ict) = 
+            use ms = new MemoryStream(bts)
+            use cs = new CryptoStream(ms,ict,CryptoStreamMode.Read)
+            let decrypted = Array.zeroCreate<byte> bts.Length
+            let bytesRead = cs.Read(decrypted,0,bts.Length)
+            decrypted 
+            |> Array.take bytesRead
+            |> SymmecricDecryptedBytes.create
 
-    let decrypt (SymmetricEncryptedBytes bts) (Decryptor ict) = 
-        use ms = new MemoryStream(bts)
-        use cs = new CryptoStream(ms,ict,CryptoStreamMode.Read)
-        let decrypted = Array.zeroCreate<byte> bts.Length
-        let bytesRead = cs.Read(decrypted,0,bts.Length)
-        decrypted 
-        |> Array.take bytesRead
-        |> SymmecricDecryptedBytes.create
+     module Stream =
+        let decrypt (sr: Stream) (Decryptor ict) =
+            sr.Position <- 0L
+            use ms = new MemoryStream()
+            use cs = new CryptoStream(sr,ict,CryptoStreamMode.Read)
+            cs.CopyTo(ms)
+            new MemoryStream(ms.ToArray()) :> Stream
+            //let decrypted = Array.zeroCreate<byte> bts.Length
+            //let bytesRead = cs.Read(decrypted,0,bts.Length)
+            //decrypted 
+            //|> Array.take bytesRead
+            //|> SymmecricDecryptedBytes.create
+
 
 module Aes =
     let newAes() =
@@ -72,17 +94,30 @@ module Aes =
         newAes
         >> fun (aes: Aes) -> Key aes.Key, IV aes.IV
 
-    let encrypt key iv bfs =
+    let encryptByteArray key iv bfs =
         newAes
         >> Encryptor.create key iv
-        >> Encryptor.encrypt bfs
+        >> Encryptor.ByteArray.encrypt bfs
         >> SymmetricEncryptedBytes
-        |> cev
+        |> ce
 
-    let decrypt key iv bfs =
+    let decryptByteArray key iv bfs =
         newAes
         >> Decryptor.create key iv
-        >> Decryptor.decrypt bfs
+        >> Decryptor.ByteArray.decrypt bfs
+        |> ce 
+
+
+    let encryptStream key iv sr =
+        newAes
+        >> Encryptor.create key iv
+        >> Encryptor.Stream.encrypt sr
+        |> ce
+
+    let decryptStream key iv bfs =
+        newAes
+        >> Decryptor.create key iv
+        >> Decryptor.Stream.decrypt bfs
         |> ce 
 
 type Salt = private | Salt of byte[]
@@ -112,8 +147,6 @@ module Password =
    
     let create = Password
     let getPasswordDeriveBytes salt (Password pwd) =
-        let pwdBts = System.Text.Encoding.Unicode.GetBytes(pwd) 
-        let tdes = new TripleDESCryptoServiceProvider()
         let pdb = new PasswordDeriveBytes(pwd,salt,"SHA512",10)
         pdb
     //let getAesFromPassword salt pwd  =

@@ -1,13 +1,15 @@
-﻿#load "SymmetricEncryption.fs"
+﻿#load "Fsharp.fs"
 #load "String.fs"
 #load "ByteArray.fs"
+#load "SymmetricEncryption.fs"
 
 open EncryptCore.SymmetricEncryption
 open EncryptCore
+open System.IO
 
 let key,iv = Aes.newKeys()
-let encryptor' = Aes.encrypt key iv
-let decryptor' = Aes.decrypt key iv 
+let encryptor' = Aes.encryptByteArray key iv
+let decryptor' = Aes.decryptByteArray key iv 
 
 let bts = System.Text.Encoding.UTF8.GetBytes("skdnöalskndöalskndölkasndlökadnö")
 bts.Length 
@@ -22,11 +24,11 @@ let pwdEncryptor salt pwd =
     let key,iv = Password.getAesKeyFromPassword KeySize.key256  salt  pwd
     String.toByteArray
     >> BytesForSymmetricEncryption.create 
-    >> Aes.encrypt key iv
+    >> Aes.encryptByteArray key iv
 
 let pwdDecryptor salt pwd bts = 
     let key,iv = Password.getAesKeyFromPassword KeySize.key256  salt  pwd
-    Aes.decrypt key iv bts
+    Aes.decryptByteArray key iv bts
 
 let testSentence = "Ett test av kyptering med password"
 
@@ -39,3 +41,11 @@ let pwdDecryptedString =
     |> ByteArray.toString
 
 printfn "Resultatet är %b" (pwdDecryptedString = testSentence)
+
+let fs = File.OpenRead(@"c:\temp\framochtillbaka.txt")
+let msEncrypted = Aes.encryptStream key iv fs
+let msDecrypted = Aes.decryptStream key iv msEncrypted
+
+let fsDecrypted = File.OpenWrite(@"c:\temp\framochtillbaka_decrypted.txt")
+msDecrypted.CopyTo(fsDecrypted)
+fs.Close()
