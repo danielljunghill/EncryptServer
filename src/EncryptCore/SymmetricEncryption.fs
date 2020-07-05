@@ -35,13 +35,15 @@ module IV =
 
 type Encryptor = private | Encryptor of ICryptoTransform
 
-
-type EncryptedFile = EncryptedFile of string * string
-type DecryptedFile = DecryptedFile of string * string
+type EncryptedStream = EncryptedStream of Stream
+type DecryptedStream = DecryptedStream of Stream
+type EncryptTargetStream = EncryptTargetStream of Stream
+type DecryptTargetStream = DecryptTargetStream of Stream
 
 module Encryptor =
     let create (Key key) (IV iv) (aes: Aes) =
         aes.CreateEncryptor(key,iv) |> Encryptor
+
     module ByteArray = 
         let encrypt (BytesForSymmetricEncryption bts) (Encryptor ict)   =
             use ms = new MemoryStream()
@@ -51,29 +53,17 @@ module Encryptor =
             ms.ToArray() 
 
     module Stream =
-        let encrypt (sr: Stream) (Encryptor ict) =
-            use ms = new MemoryStream()
-            use cs = new CryptoStream(ms,ict,CryptoStreamMode.Write) 
-            sr.CopyTo (cs)
+        let encrypt (DecryptedStream srSource) (EncryptTargetStream srTarget) (Encryptor ict) =
+            use cs = new CryptoStream(srTarget,ict,CryptoStreamMode.Write) 
+            srSource.CopyTo (cs)
             cs.FlushFinalBlock()
-            new MemoryStream(ms.ToArray())  :> Stream
 
-    module FileStream =
-        let encrypt  (sr: Stream) (EncryptedFile (path,name)) (Encryptor ict)  =
-            sr.Position <- 0L
-            let fn = Path.Combine(path, sprintf "%s.%s" name "aes")
-            use fsEncrypted = File.OpenWrite(fn)
-            use cs = new CryptoStream(fsEncrypted,ict,CryptoStreamMode.Write) 
-            sr.CopyTo (cs)
-            cs.FlushFinalBlock()
-            fsEncrypted.Close()
-           
 
-    
 type Decryptor = private | Decryptor of ICryptoTransform
 module Decryptor=
     let create (Key key) (IV iv) (aes: Aes) =
         aes.CreateDecryptor(key,iv)  |> Decryptor
+
     module ByteArray = 
         let decrypt (SymmetricEncryptedBytes bts) (Decryptor ict) = 
             use ms = new MemoryStream(bts)
@@ -85,20 +75,12 @@ module Decryptor=
             |> SymmecricDecryptedBytes.create
 
      module Stream =
-        let decrypt (sr: Stream) (Decryptor ict) =
-            sr.Position <- 0L
-            use ms = new MemoryStream()
-            use cs = new CryptoStream(sr,ict,CryptoStreamMode.Read)
-            cs.CopyTo(ms)
-            new MemoryStream(ms.ToArray()) :> Stream
-       
-    module FileStream =
-        let decrypt (sr: Stream) (DecryptedFile (path,name)) (Decryptor ict)  =
-            use fsDecrypt = File.OpenWrite(Path.Combine(path, sprintf "%s" name))
-            use cs = new CryptoStream(sr,ict,CryptoStreamMode.Read) 
-            cs.CopyTo (fsDecrypt)
-            //cs.FlushFinalBlock()
+        let decrypt (EncryptedStream srEncrypted) (DecryptTargetStream srTarget) (Decryptor ict) =
+            srEncrypted.Position <- 0L
+            use cs = new CryptoStream(srEncrypted,ict,CryptoStreamMode.Read)
+            cs.CopyTo(srTarget)
 
+            
 module Aes =
     let newAes() =
         let aes = Aes.Create()
@@ -126,31 +108,20 @@ module Aes =
         |> ce 
 
 
-    let encryptStream key iv sr =
+    let encryptStream key iv sourceStream targetStream =
         newAes
         >> Encryptor.create key iv
-        >> Encryptor.Stream.encrypt sr
+        >> Encryptor.Stream.encrypt sourceStream targetStream
         |> ce
 
-    let decryptStream key iv bfs =
+    let decryptStream key iv encryptedStream  targetStream =
         newAes
         >> Decryptor.create key iv
-        >> Decryptor.Stream.decrypt bfs
+        >> Decryptor.Stream.decrypt encryptedStream targetStream
         |> ce 
 
 
-    let encryptStreamToFile key iv sr encryptDestination =
-        newAes
-        >> Encryptor.create key iv
-        >> Encryptor.FileStream.encrypt sr encryptDestination
-        |> ce
-
-    let decryptStreamToFile key iv sr decryptDestination =
-        newAes
-        >> Decryptor.create key iv 
-        >> Decryptor.FileStream.decrypt sr decryptDestination
-        |> ce 
-
+ 
 type Salt = private | Salt of byte[]
 module Salt =
     let toByteArray (Salt bts) = bts

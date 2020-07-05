@@ -42,20 +42,34 @@ let pwdDecryptedString =
 
 printfn "Resultatet är %b" (pwdDecryptedString = testSentence)
 
-let fs = File.OpenRead(@"c:\temp\framochtillbaka.txt")
-let msEncrypted = Aes.encryptStream key iv fs
-let msDecrypted = Aes.decryptStream key iv msEncrypted
+let keyPwd,ivPwd = Password.getAesKeyFromPassword KeySize.key256  salt  pwd
 
-let fsDecrypted = File.OpenWrite(@"c:\temp\framochtillbaka_decrypted.txt")
-msDecrypted.CopyTo(fsDecrypted)
-fsDecrypted.Close()
+let fileSource = @"c:\temp\framochtillbaka.txt"
+let fileTarget = @"c:\temp\framochtillbaka_test.aes"
+
+let encryptStream source target  =
+    use fsSource = File.OpenRead(source)
+    let enSource = DecryptedStream fsSource
+    use fsTarget = File.OpenWrite (target)
+    let enTarget = EncryptTargetStream fsTarget
+    Aes.encryptStream  keyPwd ivPwd enSource enTarget
+    fsSource.Close()
+    fsTarget.Close()
 
 
-let fsEncrypt = Aes.encryptStreamToFile key iv fs (EncryptedFile (@"c:\temp","framochtillbaka8_encrypted"))
+let decryptStream source target = 
+    use fsSource = File.OpenRead(source)
+    let enSource = EncryptedStream fsSource
+    use fsTarget = File.OpenWrite (target)
+    let enTarget = DecryptTargetStream fsTarget
+    Aes.decryptStream  keyPwd ivPwd enSource enTarget
+    fsSource.Close()
+    fsTarget.Close()
 
-let fsEncrypted = File.OpenRead(@"c:\temp\framochtillbaka8_encrypted.aes")
+encryptStream @"c:\temp\framochtillbaka.txt" @"c:\temp\framochtillbaka_test.aes"
+decryptStream @"c:\temp\framochtillbaka_test.aes" @"c:\temp\framochtillbaka_decrypted.txt"
 
-Aes.decryptStreamToFile key iv fsEncrypted (DecryptedFile (@"c:\temp","framochtillbaka8decrypted.txt"))
+//msDecrypted.CopyTo(fsDecrypted)
+//fsDecrypted.Close()
 
-fsEncrypted.Close()
 //let msDecrypted = Aes.decryptStream key iv msEncrypted
