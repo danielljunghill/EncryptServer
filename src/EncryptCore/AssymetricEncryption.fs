@@ -72,28 +72,64 @@ module KeyPairCsp =
 
 
 
-type BytesToSign = private | BytesToSign of byte[]
-module BytesToSign =
-    let create = BytesToSign
-    let toByteArray (BytesToSign bts) = bts
+type HashSignature = 
+    private 
+    |  SHA256HashSignature of byte[]
+    |  SHA512HashSignature of byte[]
 
-type SignedData = private | SignedData of byte[]
-module SignedData =
-    let toByteArray (SignedData bts) =  bts
-    
+module HashSignature =
+    let toByteArray signature = 
+        match signature with
+        | SHA256HashSignature bts -> bts
+        | SHA512HashSignature bts -> bts
+
+
+type ByteArraySignature = 
+    private 
+    |  SHA256ByteArraySignature of byte[]
+    |  SHA512ByteArraySignature of byte[]
+
+module ByteArraySignature =
+    let toByteArray signature = 
+        match signature with
+        | SHA256ByteArraySignature bts -> bts
+        | SHA512ByteArraySignature bts -> bts  
+
+open EncryptCore.Hash
 module Signature =
     module Sign =
-        let byteArray keyPair bytesToSign  =
+
+        let private byteArray' provider ftype keyPair (bts: byte[])  =
             let rsaAlg = KeyPairCsp.toRsaAlg keyPair
-            rsaAlg.SignData(BytesToSign.toByteArray bytesToSign, new SHA512CryptoServiceProvider())
-            |> SignedData
+            rsaAlg.SignData(bts, provider)
+            |> ftype
+        let byteArray256 = byteArray' (new SHA256CryptoServiceProvider()) SHA256ByteArraySignature
+        let byteArray512 = byteArray' (new SHA512CryptoServiceProvider()) SHA512ByteArraySignature
+        let private hash' algorithm ftype = 
+            fun keypair hash ->
+                let rsaAlg = KeyPairCsp.toRsaAlg keypair
+                rsaAlg.SignHash(ShaHash.toByteArray hash, algorithm,RSASignaturePadding.Pss)
+                |> ftype
+        let hash256 = hash' HashAlgorithmName.SHA256 SHA256HashSignature
+        let hash512 = hash' HashAlgorithmName.SHA512 SHA256HashSignature    
 
     module Verify =
-        let byteArray  =
-            let verifyData (rsaAlg:RSACryptoServiceProvider) signedData (BytesToSign bts) =
-                rsaAlg.VerifyData(bts, new SHA512CryptoServiceProvider(), SignedData.toByteArray signedData)
-            PublicCsp.toRsaAlg 
-            >> verifyData  
+        let byteArray publicCsp (signature: ByteArraySignature)  (bts: byte[]) =
+            let rsaAlg = PublicCsp.toRsaAlg publicCsp
+            match signature with
+            | SHA256ByteArraySignature signatureBts ->
+                rsaAlg.VerifyData(bts, new SHA256CryptoServiceProvider(), signatureBts)
+            | SHA512ByteArraySignature signatureBts ->
+                rsaAlg.VerifyData(bts, new SHA512CryptoServiceProvider(), signatureBts)
+
+        let verifyHash publicCsp signature hash =
+            let rsaAlg = PublicCsp.toRsaAlg publicCsp
+            match signature with
+            | SHA256HashSignature signatureBts ->
+                rsaAlg.VerifyHash(ShaHash.toByteArray hash, signatureBts,HashAlgorithmName.SHA256,RSASignaturePadding.Pss)
+            | SHA512HashSignature signatureBts ->
+                rsaAlg.VerifyHash(ShaHash.toByteArray hash, signatureBts,HashAlgorithmName.SHA512,RSASignaturePadding.Pss)
+        
 
 
 

@@ -3,6 +3,7 @@ open System
 open System.IO
 open System.Security.Cryptography
 open EncryptCore.Fsharp
+open EncryptCore.Hash
 
 type BytesForSymmetricEncryption = private | BytesForSymmetricEncryption of byte[]
 type SymmetricEncryptedBytes = private | SymmetricEncryptedBytes of byte[]
@@ -79,7 +80,6 @@ module Decryptor=
             srEncrypted.Position <- 0L
             use cs = new CryptoStream(srEncrypted,ict,CryptoStreamMode.Read)
             cs.CopyTo(srTarget)
-
             
 module Aes =
     let newAes() =

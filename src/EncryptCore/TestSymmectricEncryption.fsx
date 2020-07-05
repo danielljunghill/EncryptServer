@@ -1,6 +1,7 @@
 ﻿#load "Fsharp.fs"
 #load "String.fs"
 #load "ByteArray.fs"
+#load "Hash.fs"
 #load "SymmetricEncryption.fs"
 
 open EncryptCore.SymmetricEncryption

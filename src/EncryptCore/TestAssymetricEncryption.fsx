@@ -1,6 +1,7 @@
 ﻿#load "Fsharp.fs"
 #load "ByteArray.fs"
 #load "String.fs"
+#load "Hash.fs"
 #load "AssymetricEncryption.fs"
 
 open EncryptCore.AssymetricEncryption
@@ -19,11 +20,11 @@ let aev = encryptor btsString
 let decryptedBts = decryptor aev |> AssymetricDecryptedBytes.toByteArray
 let decryptedStr = System.Text.Encoding.UTF8.GetString(decryptedBts)
 
-let stringToSign = String.toByteArray >> BytesToSign.create 
+let stringToSign = String.toByteArray 
 let stringToSign1 = stringToSign "Ett test för alla oss galningar 1"
 let stringToSign2 = stringToSign "Ett test för alla oss galningar 2"
 
-let signedbts = Signature.Sign.byteArray priv stringToSign1
+let signedbts = Signature.Sign.byteArray256 priv stringToSign1
 let verifiedResult = Signature.Verify.byteArray pub signedbts stringToSign1
 let verifiedResult2 = Signature.Verify.byteArray pub signedbts stringToSign2
 
