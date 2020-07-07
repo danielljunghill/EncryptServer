@@ -24,7 +24,7 @@ let stringToSign = String.toByteArray
 let stringToSign1 = stringToSign "Ett test för alla oss galningar 1"
 let stringToSign2 = stringToSign "Ett test för alla oss galningar 2"
 
-let signedbts = Signature.Sign.byteArray256 priv stringToSign1
+let signedbts = Signature.Sign.byteArray512 priv stringToSign1
 let verifiedResult = Signature.Verify.byteArray pub signedbts stringToSign1
 let verifiedResult2 = Signature.Verify.byteArray pub signedbts stringToSign2
 

@@ -120,16 +120,22 @@ module Aes =
         >> Decryptor.Stream.decrypt encryptedStream targetStream
         |> ce 
 
-
- 
-type Salt = private | Salt of byte[]
-module Salt =
-    let toByteArray (Salt bts) = bts
+type RandomByteArray = private | RandomByteArray of byte[]
+module RandomByteArray =
     let create length =
         let bts = Array.zeroCreate<byte> length
         let rand = new RNGCryptoServiceProvider()
-        rand.GetBytes(bts)
-        Salt bts
+        rand.GetBytes(bts) 
+        RandomByteArray bts
+    let toByteArray (RandomByteArray bts) = bts
+
+type Salt = private | Salt of byte[]
+module Salt =
+    let toByteArray (Salt bts) = bts
+    let create  =
+        RandomByteArray.create
+        >> RandomByteArray.toByteArray
+        >> Salt 
 
 type KeySize = private | KeySize of int
 module KeySize =
@@ -151,6 +157,7 @@ module Password =
     let getPasswordDeriveBytes salt (Password pwd) =
         let pdb = new PasswordDeriveBytes(pwd,salt,"SHA512",10)
         pdb
+
     //let getAesFromPassword salt pwd  =
     //    let aes = createAes()
     //    let pdb = getPasswordDeriveBytes salt pwd

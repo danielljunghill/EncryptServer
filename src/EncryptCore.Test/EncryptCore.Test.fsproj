@@ -19,4 +19,9 @@
     <PackageReference Include="coverlet.collector" Version="1.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EncryptCore.Model\EncryptCore.Model.fsproj" />
+    <ProjectReference Include="..\EncryptCore\EncryptCore.fsproj" />
+  </ItemGroup>
+
 </Project>

@@ -7,11 +7,13 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "EncryptServer", "EncryptSer
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "EncryptServerConsole", "EncryptServerConsole\EncryptServerConsole.fsproj", "{E278F71B-D9AC-4D0E-8081-93FD24B96F7D}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EncryptCore.Test", "EncryptCore.Test\EncryptCore.Test.fsproj", "{D37FAA7D-06E9-4FB4-AE41-A87E85CD5F3F}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "EncryptCore.Test", "EncryptCore.Test\EncryptCore.Test.fsproj", "{D37FAA7D-06E9-4FB4-AE41-A87E85CD5F3F}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EncryptCore", "EncryptCore\EncryptCore.fsproj", "{1780B51F-621F-4FAE-B538-F7019BA2484A}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "EncryptCore", "EncryptCore\EncryptCore.fsproj", "{1780B51F-621F-4FAE-B538-F7019BA2484A}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EncryptIdentity", "EncryptIdentity\EncryptIdentity.fsproj", "{B0648E97-0026-4D7A-B9CF-1F4195C1C097}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "EncryptIdentity", "EncryptIdentity\EncryptIdentity.fsproj", "{B0648E97-0026-4D7A-B9CF-1F4195C1C097}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EncryptCore.Model", "EncryptCore.Model\EncryptCore.Model.fsproj", "{1773F51E-0FE1-411D-85DC-FEAFB8F7B9F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{B0648E97-0026-4D7A-B9CF-1F4195C1C097}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0648E97-0026-4D7A-B9CF-1F4195C1C097}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0648E97-0026-4D7A-B9CF-1F4195C1C097}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1773F51E-0FE1-411D-85DC-FEAFB8F7B9F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1773F51E-0FE1-411D-85DC-FEAFB8F7B9F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1773F51E-0FE1-411D-85DC-FEAFB8F7B9F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1773F51E-0FE1-411D-85DC-FEAFB8F7B9F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

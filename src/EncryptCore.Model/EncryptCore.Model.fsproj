@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Identity.fs" />
+    <Compile Include="Keys.fs" />
+    <Compile Include="PrivateClientKey.fs" />
+    <Compile Include="PrivateServerKey.fs" />
+    <Compile Include="PublicServerKey.fs" />
+    <Compile Include="PublicClientKey.fs" />
+    <Compile Include="Library.fs" />
+    <None Include="IdentitytTest.fsx" />
+  </ItemGroup>
+
+  <ItemGroup />
+
+  <ItemGroup>
+    <ProjectReference Include="..\EncryptCore\EncryptCore.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -41,6 +41,7 @@ module RSACryptoServiceProvider =
             rsAlg.ExportParameters(false)
         | IncludeBoth ->
             rsAlg.ExportParameters(true)
+    
 
 module PublicCsp =
      let toB64String  =
@@ -53,8 +54,14 @@ module PublicCsp =
      let encrypt  =
          toRsaAlg 
          >> fun rsaAlg -> fun bts -> rsaAlg.Encrypt(bts,false) |> AssymetricEncryptedBytes
+     let fromKeyPair (KeyPairCsp bts) =
+         let provider = RSACryptoServiceProvider.importCsaBlob bts
+         provider.ExportCspBlob(false) |> PublicCsp
 
 module KeyPairCsp =
+    let create() = 
+        let _, kp = RSACryptoServiceProvider.createRsaKeyPair()
+        kp
     let toB64String =
         fun (KeyPairCsp blob) -> Convert.ToBase64String(blob)   
     let fromB64String =
