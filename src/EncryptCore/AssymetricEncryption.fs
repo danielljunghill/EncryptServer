@@ -42,7 +42,6 @@ module RSACryptoServiceProvider =
         | IncludeBoth ->
             rsAlg.ExportParameters(true)
     
-
 module PublicCsp =
      let toB64String  =
          fun (PublicCsp blob) -> Convert.ToBase64String blob
@@ -76,8 +75,6 @@ module KeyPairCsp =
     let decrypt  =
         toRsaAlg
         >> (fun rsaAlg -> (fun (AssymetricEncryptedBytes bts) -> rsaAlg.Decrypt(bts,false) |> AssymetricDecryptedBytes))
-
-
 
 type HashSignature = 
     private 
