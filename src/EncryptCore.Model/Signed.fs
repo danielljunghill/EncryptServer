@@ -2,10 +2,16 @@
 
 open EncryptCore.AssymetricEncryption
 
+type NontEmptyArray<'T> =
+    {
+        first: 'T
+        rest: 'T []
+    }
+
 type Signed<'T> =
     {
         value:'T
-        signature: ByteArraySignature     
+        signature: NontEmptyArray<ByteArraySignature>    
     }
 
 module Signed =
@@ -16,3 +22,5 @@ module Signed =
         }
     let validate map (signedValue: Signed<'T>)  =
         fun publicScp -> Signature.Verify.byteArray publicScp signedValue.signature (map signedValue.value)
+    
+    let sign 
