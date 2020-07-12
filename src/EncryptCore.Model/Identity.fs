@@ -1,16 +1,29 @@
 ﻿namespace EncryptCore.Model
 open EncryptCore.SymmetricEncryption
 open EncryptCore
-type Identity = private | Identity of string
+open EncryptCore.AssymetricEncryption
+
+type Identity = private | Identity of byte[]
 
 module Identity =
     let private create'  = 
             RandomByteArray.create
             >> RandomByteArray.toByteArray
-            >> ByteArray.toBase64String
-            >> Identity  
+          
     let create =
         fun () -> create'  128
+        >> Identity
+
+    let toBase64String (Identity bts) =
+        Base64String.fromByteArray bts
+    
+    let fromBase64String =
+        Base64String.toByteArray
+        >> Identity
+
+    let toByteArray (Identity bts) = bts
+    
+        
 
 type ServerIdentity = private | ServerIdentity of Identity 
 module ServerIdentity =
@@ -21,3 +34,6 @@ type ClientIdentity = private | ClientIdentity of Identity
 module ClientIdentity =
     let create =
          Identity.create >> ClientIdentity
+
+
+

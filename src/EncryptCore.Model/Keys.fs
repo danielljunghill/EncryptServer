@@ -1,115 +1,160 @@
 ﻿namespace EncryptCore.Model
 open EncryptCore.SymmetricEncryption
 open EncryptCore.AssymetricEncryption
+open EncryptCore
+open EncryptCore.Hash
 
+type KeyId = | KeyId of Identity
 
-type PublicEncryptionKey = private | PublicEncryptionKey of PublicCsp
-type PublicEncryptionKeyString = private | PublicEncryptionKeyString of string
-type PublicLoginKey = private | PublicLoginKey of PublicCsp
-type PublicLoginKeyString = private | PublicLoginKeyString of string
-type EncryptionKeyPair = private | EncryptionKeyPair of KeyPairCsp
-type EncryptionKeyPairString = private | EncryptionKeyPairString of string
-type LoginKeyPair = private | LoginKeyPair of KeyPairCsp
-type LoginKeyPairString = private | LoginKeyPairString of string
-
-module EncryptionKeyPair =
+module KeyId =
     let create =
-       KeyPairCsp.create >> EncryptionKeyPair
-    let toEncryptionKeyPairString (EncryptionKeyPair kp) =
-        KeyPairCsp.toB64String kp |> EncryptionKeyPairString
+        Identity.create
+        >> KeyId
+    let toByteArray (KeyId (Identity bts)) = bts
+    //let toBu (KeyId (Identity bts)) = bts
+    //let create keyPair =
+    //    Identity.create()
+    //    |> KeyId
+    //    |> fun identity -> SignedValue.create map identity keyPair
 
-module EncryptionKeyPairString =
-    let toEncryptionKeyPair (EncryptionKeyPairString s) =
-        KeyPairCsp.fromB64String s |> EncryptionKeyPair
-
-module LoginKeyPair =
-    let create =
-        KeyPairCsp.create >> LoginKeyPair
-    let toLoginKeyPairString (LoginKeyPair kp) =
-        KeyPairCsp.toB64String kp |> LoginKeyPairString
-
-module LoginKeyPairString =
-    let toLoginKeyPair (LoginKeyPairString s) =
+type PublicKeyId = private | PublicKeyId of KeyId
+module PublicKeyId = 
+    let toByteArray (PublicKeyId (KeyId (Identity bts)))= bts
         
-module PublicLoginKey =
-    let extract (LoginKeyPair key) =
-        key |> PublicCsp.fromKeyPair  |> PublicLoginKey
+    let create =
+        KeyId.create
+        >> PublicKeyId
 
-module PublicEncryptionKey =
-    let extract (EncryptionKeyPair key) =
-        key |> PublicCsp.fromKeyPair  |> PublicEncryptionKey
+    let toSigned  =
+        Signed.create toByteArray 
+
+    let createSigned  =
+        create()
+        |> (fun value -> toSigned value)
+
+    let validate  =
+        Signed.validate toByteArray
+
+
+type PrivateKey =
+    {
+        id: Signed<PublicKeyId>
+        keyPairCsp: KeyPairCsp
+    }
+        
+type PublicKey = 
+    {
+        id: Signed<PublicKeyId>
+        publicCsp: PublicCsp
+    }
+
+module PublicKey =
+    let validate (publicKey: PublicKey) =
+        PublicKeyId.validate publicKey.id publicKey.publicCsp 
+
+
+module PrivateKey =
+    let create() =
+        let kp = KeyPairCsp.create()
+        let signedId = PublicKeyId.createSigned kp
+        {
+            id = signedId
+            keyPairCsp = kp
+        }
+    let toPublicKey (privateKey:PrivateKey) =
+        {
+            id = privateKey.id
+            publicCsp = KeyPairCsp.toPublicCsp privateKey.keyPairCsp
+        }
+
+    let validate (privateKey: PrivateKey) =
+        PublicKeyId.validate privateKey.id (KeyPairCsp.toPublicCsp privateKey.keyPairCsp) 
+
+
+type PublicEncryptionKey = private | PublicEncryptionKey of PublicKey
+type PublicLoginKey = private | PublicLoginKey of PublicKey
+type PublicAccountKey = private | PublicAccountKey of PublicKey
+type EncryptionKeyPair = private | EncryptionKeyPair of PrivateKey
+type LoginKeyPair = private | LoginKeyPair of PrivateKey  
+type PrivateAccountKey = private | PrivateAccountKey of PrivateKey
 
 type PrivateAccount =
  {
-    identity: Identity
     encryptionKeyPair : EncryptionKeyPair
     loginKeyPair : LoginKeyPair
+    accountKey: PrivateAccountKey
  }
+ type SignedPrivateAccount = private | SignedPrivateAccount of Signed<PrivateAccount> 
 
- module private PrivateAccount =
-    let create() =
-        {
-            identity = Identity.create()
-            encryptionKeyPair = EncryptionKeyPair.create()
-            loginKeyPair = LoginKeyPair.create()
-        }
+// module PrivateAccount =
+//    let toByteArray
+//    let sign
+
+
+// module private PrivateAccount =
+//    let create() =
+//        {
+//            identity = Identity.create()
+//            encryptionKeyPair = EncryptionKeyPair.create()
+//            loginKeyPair = LoginKeyPair.create()
+//        }
        
- //signerad hash
-type PublicAccount =
- {
-    identity: Identity
-    encryptionPublicKey: PublicEncryptionKey
-    loginPublicKey : PublicLoginKey
- }
+// //signerad hash
+//type PublicAccount =
+// {
+//    identity: Identity
+//    encryptionPublicKey: PublicEncryptionKey
+//    loginPublicKey : PublicLoginKey
+// }
 
- module private PublicAccount =
-     let fromPrivate (account: PrivateAccount) =
-        let result =
-            {
-                identity = account.identity
-                encryptionPublicKey = PublicEncryptionKey.extract account.encryptionKeyPair
-                loginPublicKey = PublicLoginKey.extract account.loginKeyPair
-            }
-        result
+// module private PublicAccount =
+//     let fromPrivate (account: PrivateAccount) =
+//        let result =
+//            {
+//                identity = account.identity
+//                encryptionPublicKey = PublicEncryptionKey.extract account.encryptionKeyPair
+//                loginPublicKey = PublicLoginKey.extract account.loginKeyPair
+//            }
+//        result
         
 
-type ServerPrivateAccount = private | ServerPrivateAccount of PrivateAccount
-type ServerPublicAccount = private | ServerPublicAccount of PublicAccount
+//type ServerPrivateAccount = private | ServerPrivateAccount of PrivateAccount
+//type ServerPublicAccount = private | ServerPublicAccount of PublicAccount
 
-module ServerPrivateAccount =
-    let create = 
-        PrivateAccount.create >> ServerPrivateAccount
+//module ServerPrivateAccount =
+//    let create = 
+//        PrivateAccount.create >> ServerPrivateAccount
 
-module ServerPublicAccount =
-    let fromPrivate (ServerPrivateAccount privateAccount) =
-        PublicAccount.fromPrivate privateAccount
-        |> ServerPublicAccount
+//module ServerPublicAccount =
+//    let fromPrivate (ServerPrivateAccount privateAccount) =
+//        PublicAccount.fromPrivate privateAccount
+//        |> ServerPublicAccount
 
-type ClientPrivateAccount = private | ClientPrivateAccount of PrivateAccount
-type ClientPublicAccount = private | ClientPublicAccount of PublicAccount
+//type ClientPrivateAccount = private | ClientPrivateAccount of PrivateAccount
+//type ClientPublicAccount = private | ClientPublicAccount of PublicAccount
 
-module ClientPrivateAccount =
-    let create = 
-        PrivateAccount.create >> ClientPrivateAccount
+//module ClientPrivateAccount =
+//    let create = 
+//        PrivateAccount.create >> ClientPrivateAccount
 
-module ClientPublicAccount =
-    let fromPrivate (ClientPrivateAccount privateAccount) =
-        PublicAccount.fromPrivate privateAccount
-        |> ClientPublicAccount
+//module ClientPublicAccount =
+//    let fromPrivate (ClientPrivateAccount privateAccount) =
+//        PublicAccount.fromPrivate privateAccount
+//        |> ClientPublicAccount
 
-type ServerAcccount = 
-    {
-        server: ServerPrivateAccount
-        client : ClientPublicAccount
-    }
+//type ServerAcccount = 
+//    {
+//        server: ServerPrivateAccount
+//        client : ClientPublicAccount
+//    }
 
-type ClientAccount =
-    {
-        server: ServerPublicAccount
-        client : ClientPrivateAccount
-    }
+//type ClientAccount =
+//    {
+//        server: ServerPublicAccount
+//        client : ClientPrivateAccount
+//    }
 
-//module ClientAccount =
+////module ClientAccount =
 //    let create =
 //        //får till tilbaka signerat konto
 //        //head key kan alltid signera
