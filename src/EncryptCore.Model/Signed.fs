@@ -24,9 +24,9 @@ module NotEmptyArray =
         | len when len = 0 -> None
         | len when len = 1 -> nea.first
         | _ -> nea.rest.[nea.rest.Length - 2]
+    let toArray (nea: NotEmptyArray<_>) = Array.append [| nea.first |] nea.rest
 
-            
-
+           
 type Signed<'T> =
     {
         value:'T
@@ -44,8 +44,10 @@ module Signed =
         let signature = Signature.Sign.byteArray256 keyPair btsToSign
         { signedValue with signatures = NotEmptyArray.add signature signedValue.signatures }  
 
-    let validate (signedValue:Signed<'T>) publicCps =
-        let signature = 
+    let validate (map: 'T -> byte[]) (signed:Signed<'T>) (publicCpss:PublicCsp list) =
+        let original = map signed.value
+        let signatures = NotEmptyArray.toArray signed 
+        let rec validate' 
         type Signed<'T> =
             {
                 value:'T
