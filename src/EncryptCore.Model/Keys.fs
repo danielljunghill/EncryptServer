@@ -80,10 +80,15 @@ type PrivateAccountKey = private | PrivateAccountKey of PrivateKey
 
 type PrivateAccount =
  {
-    encryptionKeyPair : EncryptionKeyPair
+    encryptionKeyPair : Signed<EncryptionKeyPair>
     loginKeyPair : LoginKeyPair
     accountKey: PrivateAccountKey
  }
+ member x.AccountId = 
+    let (PrivateAccountKey key) = x.accountKey
+    let (PublicKeyId (KeyId identity)) = key.id.value
+    identity
+
  type SignedPrivateAccount = private | SignedPrivateAccount of Signed<PrivateAccount> 
 
 // module PrivateAccount =

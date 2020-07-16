@@ -17,3 +17,8 @@ try
 finally
     fs.Close()
 
+
+
+let t = [ 1 ; 3 ; 3]
+t.Head
+
