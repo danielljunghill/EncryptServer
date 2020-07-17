@@ -25,15 +25,5 @@ module Identity =
     
         
 
-//type ServerIdentity = private | ServerIdentity of Identity 
-//module ServerIdentity =
-//    let create =
-//        Identity.create >> ServerIdentity
-
-//type ClientIdentity = private | ClientIdentity of Identity
-//module ClientIdentity =
-//    let create =
-//         Identity.create >> ClientIdentity
-
 
 

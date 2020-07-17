@@ -63,7 +63,12 @@ module Signed =
             signatures =   Signature.Sign.byteArray256 keyPair (map value) |> NotEmptyArray.create
         }
 
-    let sign (signedValue:Signed<'T>) keyPair =
+    type SignKey = private | SignKey of KeyPairCsp
+    module SignKey = 
+        let toKeyPairCsp (SignKey keyPairCsp) = keyPairCsp
+        let fromKeyPair = SignKey
+
+    let sign (signedValue:Signed<'T>) (SignKey keyPair) =
         //take bytearray for last signature
         let btsToSign = NotEmptyArray.last signedValue.signatures |> ByteArraySignature.toByteArray  
         //sign bytearray with 
