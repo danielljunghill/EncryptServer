@@ -42,6 +42,7 @@ module Signed =
             signature: ByteArraySignature
         }
     module SignatureWithByteArray =
+
         let verify (swba:SignatureWithByteArray)  publicCps =
             Signature.Verify.byteArray publicCps swba.signature swba.signedByteArray
 
@@ -54,7 +55,8 @@ module Signed =
                     { signedByteArray = ByteArraySignature.toByteArray tail.Head ; signature = head } :: getListFromSignatures tail
                 | [] -> []
             getListFromSignatures (NotEmptyArray.toList signedValue.signatures)
-                    
+
+     //create Signed and add first signature of original value            
     let createAndSign map value keyPair  =
         {
             value = value 
@@ -62,10 +64,21 @@ module Signed =
         }
 
     let sign (signedValue:Signed<'T>) keyPair =
+        //take bytearray for last signature
         let btsToSign = NotEmptyArray.last signedValue.signatures |> ByteArraySignature.toByteArray  
+        //sign bytearray with 
         let signature = Signature.Sign.byteArray256 keyPair btsToSign
-        { signedValue with signatures = NotEmptyArray.add signature signedValue.signatures }  
+        //add signature to list of signatures
+        { signedValue with signatures = NotEmptyArray.add signature signedValue.signatures } 
 
+    type ValidateResult<'T> =
+        | PartlyValid of Signed<'T>
+        | Invalid
+        | Valid
+
+        
+    //validate signatures for value: Signed<'T> with 
+    //list of public keys that should match list of signature
     let validate (map: 'T -> byte[]) (signed:Signed<'T>) (publicCpss:PublicCsp list) =
         let swbas = SignatureWithByteArray.getListFromSigned map signed
         if swbas.Length <> publicCpss.Length then
@@ -82,23 +95,8 @@ module Signed =
                 | [] -> true
             validate' (List.zip swbas publicCpss)
 
-        //let verifyLength (signatures: ByteArraySignature[]) (publicCCpsArr: PublicCsp[]) = (signatures.Length + 1) <> publicCpss.Length
-        //let verifySignature  (originalValue: byte[]) (signatures: ByteArraySignature[]) (publicCCpsArr: PublicCsp[]) level =
-        //        let signedBytes =
-        //            if level = 0 then
 
-             
-        //if (signatures.Length + 1) <> publicCpss.Length then
-        //     false
-        //else    
-        //    let rec validate' level  =
-        //       if level = 0 theh
-        //            true
-        //       else
-                  
 
-   
-        //let validate map (signedValue: Signed<'T>)  =
-    //    fun publicScp -> Signature.Verify.byteArray publicScp signedValue.signature (map signedValue.value)
-    
-    //let sign 
+
+
+

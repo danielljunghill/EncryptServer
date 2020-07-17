@@ -56,11 +56,13 @@ module PublicCsp =
      let fromKeyPair (KeyPairCsp bts) =
          let provider = RSACryptoServiceProvider.importCsaBlob bts
          provider.ExportCspBlob(false) |> PublicCsp
+     let toByteArray (PublicCsp bts) = bts
 
 module KeyPairCsp =
     let create() = 
         let _, kp = RSACryptoServiceProvider.createRsaKeyPair()
         kp
+    let toByteArray (KeyPairCsp blob) = blob
     let toB64String =
         fun (KeyPairCsp blob) -> Convert.ToBase64String(blob)   
     let fromB64String =

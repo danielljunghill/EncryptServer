@@ -10,8 +10,8 @@ module Identity =
             RandomByteArray.create
             >> RandomByteArray.toByteArray
           
-    let create =
-        fun () -> create'  128
+    let create count =
+        fun () -> create'  count
         >> Identity
 
     let toBase64String (Identity bts) =
@@ -25,15 +25,15 @@ module Identity =
     
         
 
-type ServerIdentity = private | ServerIdentity of Identity 
-module ServerIdentity =
-    let create =
-        Identity.create >> ServerIdentity
+//type ServerIdentity = private | ServerIdentity of Identity 
+//module ServerIdentity =
+//    let create =
+//        Identity.create >> ServerIdentity
 
-type ClientIdentity = private | ClientIdentity of Identity
-module ClientIdentity =
-    let create =
-         Identity.create >> ClientIdentity
+//type ClientIdentity = private | ClientIdentity of Identity
+//module ClientIdentity =
+//    let create =
+//         Identity.create >> ClientIdentity
 
 
 
