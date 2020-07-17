@@ -50,8 +50,9 @@ module SignedPrivateKey =
         Signed.sign signedKey  
         >> SignedPrivateKey
     let toPrivateKey (SignedPrivateKey signedKey) = signedKey.value
-    let validate (SignedPrivateKey signedKey) signKeys =
-        Signed.validate PrivateKey.toByteArray signedKey ((KeyPairCsp.toPublicCsp signedKey.value.keyPairCsp) :: signKeys)
+    let validate (SignedPrivateKey signedKey) (signedPublicKeys: SignedPublicKey list) =
+        let getSignKey (SignedPublicKey signedPublicKey) = signedPublicKey.value.publicCsp
+        Signed.validate PrivateKey.toByteArray signedKey ((KeyPairCsp.toPublicCsp signedKey.value.keyPairCsp) :: (signedPublicKeys |> List.map (fun signedPublicKeys -> getSignKey signedPublicKeys)))
 
 module SignedPublicKey =
     let create (SignedPrivateKey signedPrivateKey) =
@@ -62,14 +63,12 @@ module SignedPublicKey =
     let sign (SignedPublicKey signedKey)  =
         Signed.sign signedKey  
         >> SignedPublicKey
-    let toPublicKey (SignedPublicKey signedKey) = signedKey.value
-    let validate (SignedPublicKey signedKey) (SignedPrivateKey signKey) signKeys =
-        if signedKey.value.id <> signKey.value.id then  
-            false
-        else
-            Signed.validate PublicKey.toByteArray signedKey ((KeyPairCsp.toPublicCsp signKey.value.keyPairCsp) :: signKeys)
-
-
+    let toSignedKey (SignedPublicKey signedKey) = signedKey
+    let toPublicKey = toSignedKey >> fun v -> v.value
+    let toValidateKey = toSignedKey >> fun v -> v.value.publicCsp
+    let id = toSignedKey >> fun v -> v.value.id
+    let validate signedPublicKey (signedPublicKeys: SignedPublicKey list) =
+        Signed.validate PublicKey.toByteArray (toSignedKey signedPublicKey) ((toValidateKey signedPublicKey)  :: (signedPublicKeys |> List.map (fun signedPublicKey -> toValidateKey signedPublicKey)))
 
 
 
@@ -80,10 +79,33 @@ module PrivateAccountKey =
     let create =
         SignedPrivateKey.create
         >> PrivateAccountKey
-    let verify (PrivateAccountKey signedPrivateKey) =
+    let validate (PrivateAccountKey signedPrivateKey) =
         SignedPrivateKey.validate signedPrivateKey []
+    let toSignedPrivateKey (PrivateAccountKey privateKey) = privateKey
+    let toSignKey (PrivateAccountKey privateKey) = SignedPrivateKey.toPrivateKey privateKey
+
+module PublicAccountKey =
+    let create =
+        PrivateAccountKey.toSignedPrivateKey
+        >> SignedPublicKey.create 
+    let toValidateKey (PublicAccountKey publicAccountKey) = publicAccountKey
+    let validate 
 
 type PrivateEncryptionKey = private | PrivateEncryptionKey of SignedPrivateKey
+module PrivateEncryptionKey =
+    let create (privateAccountKey: PrivateAccountKey) =
+        let signedPrivateKey = SignedPrivateKey.create()
+        let signKey = PrivateAccountKey.toSignKey privateAccountKey
+        SignedPrivateKey.sign signedPrivateKey signKey.keyPairCsp
+        |> PrivateEncryptionKey
+
+    let validate (privateEncryptionKey : PrivateEncryptionKey) (publicAccountKey : PublicAccountKey) =
+        let (PrivateEncryptionKey signedPrivateKey) = privateEncryptionKey
+        SignedPrivateKey.validate signedPrivateKey ()
+        
+    let decrypt = ()
+
+
 type PublicEncryptionKey = private | PublicEncryptionKey of SignedPublicKey
 
 
