@@ -3,7 +3,7 @@ open EncryptCore.SymmetricEncryption
 open EncryptCore.AssymetricEncryption
 open EncryptCore
 open EncryptCore.Hash
-
+open Model.Signed
 type KeyId = | KeyId of Identity
 
 module KeyId =
@@ -18,12 +18,14 @@ type PrivateKey =
         id: KeyId
         keyPairCsp: KeyPairCsp
     }
+
 module PrivateKey =
     let toByteArray (privateKey : PrivateKey) =
         Array.append (KeyId.toByteArray privateKey.id) (KeyPairCsp.toByteArray privateKey.keyPairCsp)   
     let toKeyPairsCsp (privateKey: PrivateKey) = privateKey.keyPairCsp
     let create() =
         { id = KeyId.create(); keyPairCsp = KeyPairCsp.create() }
+    let toPublicCsp (privateKey: PrivateKey) = KeyPairCsp.toPublicCsp privateKey.keyPairCsp
 
 type PublicKey =
     {
@@ -34,27 +36,30 @@ type PublicKey =
 module PublicKey =
     let toByteArray (publicKey : PublicKey) =
         Array.append (KeyId.toByteArray publicKey.id) (PublicCsp.toByteArray publicKey.publicCsp)
-
     let create (privateKey: PrivateKey) =
         { id = privateKey.id; publicCsp = KeyPairCsp.toPublicCsp privateKey.keyPairCsp }
 
 type SignedPrivateKey = private | SignedPrivateKey of Signed<PrivateKey>
 type SignedPublicKey = private | SignedPublicKey of Signed<PublicKey>
 
+
 module SignedPrivateKey =
-    let create() =
-        let privateKey = PrivateKey.create()
-        let signed = Signed.createAndSign PrivateKey.toByteArray privateKey privateKey.keyPairCsp
+    //let create() =
+    //    let privateKey = PrivateKey.create()
+    //    let signed = Signed.createAndSign PrivateKey.toByteArray privateKey privateKey.keyPairCsp
+    //    SignedPrivateKey signed
+    let create (privateKey: PrivateKey)  =
+        let signKey = SignKey.fromKeyPair privateKey.keyPairCsp
+        let signed = Signed.createAndSign PrivateKey.toByteArray privateKey signKey
         SignedPrivateKey signed
-
-
-    let sign (SignedPrivateKey signKey)  =
-        Signed.sign signKey  
+        Signed.sign (SelfValidationKey ValidateiprivateKey.keyPairCsp)  
         >> SignedPrivateKey
     let toPrivateKey (SignedPrivateKey signedKey) = signedKey.value
     let validate (SignedPrivateKey signedKey) (signedPublicKeys: SignedPublicKey list) =
-        let getSignKey (SignedPublicKey signedPublicKey) = signedPublicKey.value.publicCsp
-        Signed.validate PrivateKey.toByteArray signedKey ((KeyPairCsp.toPublicCsp signedKey.value.keyPairCsp) :: (signedPublicKeys |> List.map (fun signedPublicKeys -> getSignKey signedPublicKeys)))
+        let sigendPublicKeyToValidationKey (SignedPublicKey signedPublicKey) = Signed.ValidationKey.fromKeyPair signedPublicKey.value.publicCsp
+        let selfValidationKey =  KeyPairCsp.toPublicCsp signedKey.value.keyPairCsp
+
+        Signed.validate PrivateKey.toByteArray signedKey ( :: (signedPublicKeys |> List.map (fun signedPublicKeys -> getSignKey signedPublicKeys)))
 
 module SignedPublicKey =
     let create (SignedPrivateKey signedPrivateKey) =

@@ -56,17 +56,18 @@ module Signed =
                 | [] -> []
             getListFromSignatures (NotEmptyArray.toList signedValue.signatures)
 
-     //create Signed and add first signature of original value            
-    let createAndSign map value keyPair  =
-        {
-            value = value 
-            signatures =   Signature.Sign.byteArray256 keyPair (map value) |> NotEmptyArray.create
-        }
-
     type SignKey = private | SignKey of KeyPairCsp
     module SignKey = 
         let toKeyPairCsp (SignKey keyPairCsp) = keyPairCsp
         let fromKeyPair = SignKey
+     //create Signed and add first signature of original value            
+    let createAndSign map value (SignKey keyPairCsp)  =
+        {
+            value = value 
+            signatures =   Signature.Sign.byteArray256 keyPairCsp (map value) |> NotEmptyArray.create
+        }
+
+
 
     let sign (signedValue:Signed<'T>) (SignKey keyPair) =
         //take bytearray for last signature
@@ -81,24 +82,27 @@ module Signed =
         | Invalid
         | Valid
 
-        
+    type ValidationKey = private | ValidationKey of PublicCsp
+    module ValidationKey = 
+         let toPublicCsp (ValidationKey publicCsp) = publicCsp
+         let fromPublicCsp = ValidationKey   
     //validate signatures for value: Signed<'T> with 
     //list of public keys that should match list of signature
-    let validate (map: 'T -> byte[]) (signed:Signed<'T>) (publicCpss:PublicCsp list) =
+    let validate (map: 'T -> byte[]) (signed:Signed<'T>) (validateKeys:ValidationKey list) =
         let swbas = SignatureWithByteArray.getListFromSigned map signed
-        if swbas.Length <> publicCpss.Length then
+        if swbas.Length <> validateKeys.Length then
             false
         else 
             let rec validate' swabsWithKeys =
                 match swabsWithKeys with
                 | head :: tail  ->
-                    let (swab,publicCsp) = head
-                    if SignatureWithByteArray.verify swab publicCsp then
+                    let (swab,validateKey) = head
+                    if SignatureWithByteArray.verify swab (ValidationKey.toPublicCsp validateKey) then
                         validate' tail
                     else
                         false
                 | [] -> true
-            validate' (List.zip swbas publicCpss)
+            validate' (List.zip swbas validateKeys)
 
 
 
