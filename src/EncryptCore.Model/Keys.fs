@@ -9,12 +9,12 @@ type KeyId = | KeyId of Identity
 
 module FsharpHelper =
     let inparamReorder3 (fc: 'a -> 'b -> 'c) = fun b a -> fc a b
-    let reorder3 =  inparamReorder3   
-    let (!!) = reorder3
+    let inverse2 =  inparamReorder3   
+    let (!!) = inverse2
 
     let inparamReorder4 (fc: 'a -> 'b -> 'c -> 'd) = fun c a b  -> fc a b c
-    let reorder4 =  inparamReorder4 
-    let (!!!) = reorder4
+    let inverse3 =  inparamReorder4 
+    let (!!!) = inverse3
     let f3map (fc: 'a -> 'b -> 'c) fm = fun a b -> (fc a b) |> fm
     let (-->) = f3map
 open FsharpHelper
@@ -166,8 +166,12 @@ module PrivateAccountMemberKey =
         let signedPublicKey = toPublicKey privateEncryptionKey
         PublicAccountKey.toPublicKey
         >> fun accountPublicKey -> Signed.validate PrivateIdKey.toByteArray signed [signedPublicKey; accountPublicKey ] 
-    let resign = !! (fun value -> toSignedPrivateIdKey >> SignedPrivateIdKey.resign value) 
-    let sign = !!! (fun map value -> toSignedPrivateIdKey >> SignedPrivateIdKey.sign map value)
+    let resign =  
+        fun value -> toSignedPrivateIdKey >> SignedPrivateIdKey.resign value
+        |> inverse2
+    let sign = 
+         fun map value -> toSignedPrivateIdKey >> SignedPrivateIdKey.sign map value
+         |> inverse3
  
     
 
@@ -182,7 +186,7 @@ module PublicAccountMemberKey =
         >> (fun signedKey -> PrivateAccountKey.resign signedKey privateAccountKey)
         >> SignedPublicIdKey
         >> PublicAccountMemberKey
-    let create = !! create'
+    let create =  create' |> inverse2
      
     let toSignedPublicIdKey (PublicAccountMemberKey signedPublicIdKey) = signedPublicIdKey
     let toSignedValue = toSignedPublicIdKey >> SignedPublicIdKey.toSignedValue
