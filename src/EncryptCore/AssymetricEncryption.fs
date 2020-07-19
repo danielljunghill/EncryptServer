@@ -4,9 +4,9 @@ open System.Security.Cryptography
 open EncryptCore.Fsharp
 open System
 
-type PublicCsp =  private| PublicCsp of byte[]
+type PublicKey =  private| PublicCsp of byte[]
 
-type  KeyPairCsp = private | KeyPairCsp of byte[]
+type  PrivateKey = private | KeyPairCsp of byte[]
 
 type AssymetricDecryptedBytes = private | AssymetricDecryptedBytes of byte[]
 module AssymetricDecryptedBytes =
@@ -42,7 +42,7 @@ module RSACryptoServiceProvider =
         | IncludeBoth ->
             rsAlg.ExportParameters(true)
     
-module PublicCsp =
+module PublicKey =
      let toB64String  =
          fun (PublicCsp blob) -> Convert.ToBase64String blob
      let fromB64String =
@@ -58,7 +58,7 @@ module PublicCsp =
          provider.ExportCspBlob(false) |> PublicCsp
      let toByteArray (PublicCsp bts) = bts
 
-module KeyPairCsp =
+module PrivateKey =
     let create() = 
         let _, kp = RSACryptoServiceProvider.createRsaKeyPair()
         kp
@@ -68,7 +68,7 @@ module KeyPairCsp =
     let fromB64String =
         Convert.FromBase64String
         >> KeyPairCsp
-    let toPublicCsp  =
+    let toPublicKey  =
          (fun (KeyPairCsp blob) -> RSACryptoServiceProvider.importCsaBlob blob)  
          >> (fun rsaAlg -> rsaAlg.ExportCspBlob(false)) 
          >> PublicCsp
@@ -106,14 +106,14 @@ module Signature =
     module Sign =
 
         let private byteArray' provider ftype keyPair (bts: byte[])  =
-            let rsaAlg = KeyPairCsp.toRsaAlg keyPair
+            let rsaAlg = PrivateKey.toRsaAlg keyPair
             rsaAlg.SignData(bts, provider)
             |> ftype
         let byteArray256 = byteArray' (new SHA256CryptoServiceProvider()) SHA256ByteArraySignature
         let byteArray512 = byteArray' (new SHA512CryptoServiceProvider()) SHA512ByteArraySignature
         let private hash' algorithm ftype = 
             fun keypair hash ->
-                let rsaAlg = KeyPairCsp.toRsaAlg keypair
+                let rsaAlg = PrivateKey.toRsaAlg keypair
                 rsaAlg.SignHash(ShaHash.toByteArray hash, algorithm,RSASignaturePadding.Pss)
                 |> ftype
         let hash256 = hash' HashAlgorithmName.SHA256 SHA256HashSignature
@@ -121,7 +121,7 @@ module Signature =
 
     module Verify =
         let byteArray publicCsp (signature: ByteArraySignature)  (bts: byte[]) =
-            let rsaAlg = PublicCsp.toRsaAlg publicCsp
+            let rsaAlg = PublicKey.toRsaAlg publicCsp
             match signature with
             | SHA256ByteArraySignature signatureBts ->
                 rsaAlg.VerifyData(bts, new SHA256CryptoServiceProvider(), signatureBts)
@@ -129,7 +129,7 @@ module Signature =
                 rsaAlg.VerifyData(bts, new SHA512CryptoServiceProvider(), signatureBts)
 
         let verifyHash publicCsp signature hash =
-            let rsaAlg = PublicCsp.toRsaAlg publicCsp
+            let rsaAlg = PublicKey.toRsaAlg publicCsp
             match signature with
             | SHA256HashSignature signatureBts ->
                 rsaAlg.VerifyHash(ShaHash.toByteArray hash, signatureBts,HashAlgorithmName.SHA256,RSASignaturePadding.Pss)

@@ -56,15 +56,15 @@ module Signed =
                 | [] -> []
             getListFromSignatures (NotEmptyArray.toList signedValue.signatures)
 
-    type SignKey = private | SignKey of KeyPairCsp
+    type SignKey = private | SignKey of PrivateKey
     module SignKey = 
-        let toKeyPairCsp (SignKey keyPairCsp) = keyPairCsp
-        let fromKeyPair = SignKey
+        let toPrivateKey (SignKey privateKey) = privateKey
+        let fromPrivateKey = SignKey
      //create Signed and add first signature of original value            
-    let createAndSign map value (SignKey keyPairCsp)  =
+    let createAndSign map value (SignKey privateKey)  =
         {
             value = value 
-            signatures =   Signature.Sign.byteArray256 keyPairCsp (map value) |> NotEmptyArray.create
+            signatures =   Signature.Sign.byteArray256 privateKey (map value) |> NotEmptyArray.create
         }
 
 
@@ -82,10 +82,10 @@ module Signed =
         | Invalid
         | Valid
 
-    type ValidationKey = private | ValidationKey of PublicCsp
+    type ValidationKey = private | ValidationKey of PublicKey
     module ValidationKey = 
-         let toPublicCsp (ValidationKey publicCsp) = publicCsp
-         let fromPublicCsp = ValidationKey   
+         let toPublicKey (ValidationKey publicKey) = publicKey
+         let fromPublicKey= ValidationKey   
     //validate signatures for value: Signed<'T> with 
     //list of public keys that should match list of signature
     let validate (map: 'T -> byte[]) (signed:Signed<'T>) (validateKeys:ValidationKey list) =
@@ -97,7 +97,7 @@ module Signed =
                 match swabsWithKeys with
                 | head :: tail  ->
                     let (swab,validateKey) = head
-                    if SignatureWithByteArray.verify swab (ValidationKey.toPublicCsp validateKey) then
+                    if SignatureWithByteArray.verify swab (ValidationKey.toPublicKey validateKey) then
                         validate' tail
                     else
                         false
