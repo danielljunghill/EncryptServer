@@ -130,6 +130,9 @@ module PrivateAccountKey =
     let decrypt =
         toPrivateKey >> PrivateKey.decrypt
 
+    let isValid =
+        toPublicKey 
+
 
 module PublicAccountKey =
 
@@ -157,6 +160,22 @@ module PublicAccountKey =
         let signedOwnPublicKey = SignedPublicIdKey.toPublicKey signedPublicIdKey
         toPublicKey 
         >> (fun publicKey -> Signed.validate PublicIdKey.toByteArray signedValue [signedOwnPublicKey ; publicKey ] )
+
+    let encrypt =
+        toPublicKey
+        >> PublicKey.encrypt
+
+
+type PrivateMasterAccountKey = | PublicMasterAccountKey of PrivateAccountKey
+    
+module PublicMasterAccountKey =
+
+    let create = PrivateAccountKey.create >> PublicMasterAccountKey
+
+    let toPrivateAccountKey (PublicMasterAccountKey privateAccountKey) = privateAccountKey
+
+    let isValid = toPrivateAccountKey >> PrivateAccountKey.isValid
+
 
 type PrivateEncryptionKey = private | PrivateEncryptionKey of SignedPrivateIdKey
 
