@@ -56,12 +56,9 @@ module Signed =
                 | [] -> []
             getListFromSignatures (NotEmptyArray.toList signedValue.signatures)
 
-    type SignKey = private | SignKey of PrivateKey
-    module SignKey = 
-        let toPrivateKey (SignKey privateKey) = privateKey
-        let fromPrivateKey = SignKey
+
      //create Signed and add first signature of original value            
-    let createAndSign map value (SignKey privateKey)  =
+    let createAndSign map value privateKey  =
         {
             value = value 
             signatures =   Signature.Sign.byteArray256 privateKey (map value) |> NotEmptyArray.create
@@ -69,40 +66,37 @@ module Signed =
 
 
 
-    let sign (signedValue:Signed<'T>) (SignKey keyPair) =
+    let sign signed privateKey =
         //take bytearray for last signature
-        let btsToSign = NotEmptyArray.last signedValue.signatures |> ByteArraySignature.toByteArray  
+        let btsToSign = NotEmptyArray.last signed.signatures |> ByteArraySignature.toByteArray  
         //sign bytearray with 
-        let signature = Signature.Sign.byteArray256 keyPair btsToSign
+        let signature = Signature.Sign.byteArray256 privateKey btsToSign
         //add signature to list of signatures
-        { signedValue with signatures = NotEmptyArray.add signature signedValue.signatures } 
+        { signed with signatures = NotEmptyArray.add signature signed.signatures } 
 
     type ValidateResult<'T> =
         | PartlyValid of Signed<'T>
         | Invalid
         | Valid
 
-    type ValidationKey = private | ValidationKey of PublicKey
-    module ValidationKey = 
-         let toPublicKey (ValidationKey publicKey) = publicKey
-         let fromPublicKey= ValidationKey   
+
     //validate signatures for value: Signed<'T> with 
     //list of public keys that should match list of signature
-    let validate (map: 'T -> byte[]) (signed:Signed<'T>) (validateKeys:ValidationKey list) =
+    let validate map signed (publicKeys:PublicKey list) =
         let swbas = SignatureWithByteArray.getListFromSigned map signed
-        if swbas.Length <> validateKeys.Length then
+        if swbas.Length <> publicKeys.Length then
             false
         else 
             let rec validate' swabsWithKeys =
                 match swabsWithKeys with
                 | head :: tail  ->
-                    let (swab,validateKey) = head
-                    if SignatureWithByteArray.verify swab (ValidationKey.toPublicKey validateKey) then
+                    let (swab,publicKey) = head
+                    if SignatureWithByteArray.verify swab publicKey then
                         validate' tail
                     else
                         false
                 | [] -> true
-            validate' (List.zip swbas validateKeys)
+            validate' (List.zip swbas publicKeys)
 
 
 
