@@ -7,9 +7,11 @@ open Model.Signed
 type KeyId = | KeyId of Identity
 
 module KeyId =
+
     let create =
         Identity.create 128
         >> KeyId 
+
     let toByteArray (KeyId (Identity bts)) = bts
 
 
@@ -20,11 +22,15 @@ type PrivateIdKey =
     }
 
 module PrivateIdKey =
+
     let toByteArray (privateIdKey : PrivateIdKey) =
         Array.append (KeyId.toByteArray privateIdKey.id) (PrivateKey.toByteArray privateIdKey.privateKey)   
+
     let toPrivateKey (privateIdKey: PrivateIdKey) = privateIdKey.privateKey
+
     let create() =
         { id = KeyId.create(); privateKey = PrivateKey.create() }
+
     let toPublicCsp (privateIdKey: PrivateIdKey) = PrivateKey.toPublicKey privateIdKey.privateKey
 
 type PublicIdKey =
@@ -34,12 +40,15 @@ type PublicIdKey =
     }
 
 module PublicIdKey =
+
     let toByteArray (publicIdKey : PublicIdKey) =
         Array.append (KeyId.toByteArray publicIdKey.id) (PublicKey.toByteArray publicIdKey.publicKey)
+
     let create (privateIdKey: PrivateIdKey) =
         { id = privateIdKey.id; publicKey = PrivateKey.toPublicKey privateIdKey.privateKey }
 
 type SignedPrivateIdKey = private | SignedPrivateIdKey of Signed<PrivateIdKey>
+
 type SignedPublicIdKey = private | SignedPublicIdKey of Signed<PublicIdKey>
 
 
@@ -54,7 +63,9 @@ module SignedPrivateIdKey =
         PrivateIdKey.create
         >> fromPrivateIdKey
 
-    let toPrivateIdKey (SignedPrivateIdKey signedKey) = signedKey.value
+    let toSignedPrivateIdKey (SignedPrivateIdKey signedPrivateIdKey) = signedPrivateIdKey
+
+    let toPrivateIdKey  = toSignedPrivateIdKey >> (fun signedKey -> signedKey.value)
 
     let toPrivateKey = toPrivateIdKey >> (fun signedKey -> signedKey.privateKey)
 
@@ -67,6 +78,10 @@ module SignedPrivateIdKey =
         toPrivateKey >>
         Signed.createAndSign map value 
 
+    let isValid  =
+        toSignedPrivateIdKey
+        >> fun value -> Signed.validate PrivateIdKey.toByteArray value
+
 module SignedPublicIdKey =
 
     let create signedPrivateIdKey =
@@ -75,18 +90,19 @@ module SignedPublicIdKey =
         SignedPrivateIdKey.sign PublicIdKey.toByteArray publicKeyId signedPrivateIdKey
         |> SignedPublicIdKey
 
-    let toSignedKey (SignedPublicIdKey signedKey) = signedKey
+    let toSignedValue (SignedPublicIdKey signedKey) = signedKey
 
-    let toPublicIdKey = toSignedKey >> fun v -> v.value
+    let toPublicIdKey = toSignedValue >> fun v -> v.value
 
-    let toPublicKey = toSignedKey >> fun v -> v.value.publicKey
+    let toPublicKey = toSignedValue >> fun v -> v.value.publicKey
 
-    let toId = toSignedKey >> fun v -> v.value.id
+    let toId = toSignedValue >> fun v -> v.value.id
   
     let validate map signed (signedPublicIdKey: SignedPublicIdKey list) =
         Signed.validate map signed (signedPublicIdKey |> List.map toPublicKey)
 
 type PublicAccountKey = private | PublicAccountKey of SignedPublicIdKey
+
 type PrivateAccountKey = private | PrivateAccountKey of SignedPrivateIdKey
 
 module PrivateAccountKey =
@@ -105,13 +121,15 @@ module PrivateAccountKey =
     let toPublicKey =
         toPrivateKey >> PrivateKey.toPublicKey
 
-    //let validate (PrivateAccountKey signedPrivateIdKey)  =
-    //    SignedPublicIdKey.va signedPrivateIdKey []
-    //let toSignedPrivateIdKey (PrivateAccountKey PrivateIdKey) = PrivateIdKey
-    //let toSignKey (PrivateAccountKey PrivateIdKey) = SignedPrivateIdKey.toPrivateIdKey PrivateIdKey
-    //let sign<'T> (signed: Signed<'T>) = 
-    //    toSignedPrivateIdKey
-    //    >> SignedPrivateIdKey.sign
+    let resign value  =
+        toSignedPrivateIdKey >> SignedPrivateIdKey.resign value 
+
+    let sign map value =
+        toSignedPrivateIdKey >> SignedPrivateIdKey.sign map value
+
+    let decrypt =
+        toPrivateKey >> PrivateKey.decrypt
+
 
 module PublicAccountKey =
 
@@ -119,31 +137,59 @@ module PublicAccountKey =
         PrivateAccountKey.toSignedPrivateIdKey
         >> SignedPublicIdKey.create
         >> PublicAccountKey
-    let toSignedPublicIdKey (PublicAccountKey publicAccountKey) = publicAccountKey
-    let validate (PublicAccountKey publicAccountKey)  =
-        SignedPublicIdKey.validate publicAccountKey []
+
+    let toSignedPublicIdKey (PublicAccountKey publicAccountIdKey) = publicAccountIdKey
+
+    let toSignedValue = toSignedPublicIdKey >> SignedPublicIdKey.toSignedValue
+
+    let toPublicIdKey = toSignedPublicIdKey >> SignedPublicIdKey.toPublicIdKey
+
+    let toPublicKey = toSignedPublicIdKey >> SignedPublicIdKey.toPublicKey
+
+    let toId = toSignedPublicIdKey >> SignedPublicIdKey.toPublicKey
+
+    let isValid (publicAccountKey: PublicAccountKey) =
+        PrivateAccountKey.toPublicKey
+        >> (fun publicKey -> Signed.validate PublicIdKey.toByteArray (toSignedValue publicAccountKey) [publicKey])
+
+    let validate (signedPublicIdKey: SignedPublicIdKey) =
+        let signedValue = SignedPublicIdKey.toSignedValue signedPublicIdKey
+        let signedOwnPublicKey = SignedPublicIdKey.toPublicKey signedPublicIdKey
+        toPublicKey 
+        >> (fun publicKey -> Signed.validate PublicIdKey.toByteArray signedValue [signedOwnPublicKey ; publicKey ] )
 
 type PrivateEncryptionKey = private | PrivateEncryptionKey of SignedPrivateIdKey
 
 module PrivateEncryptionKey =
 
-    let create (privateAccountKey: PrivateAccountKey) =
-        let signedPrivateIdKey = SignedPrivateIdKey.create()
-        let signKey = PrivateAccountKey.toSignKey privateAccountKey
-        SignedPrivateIdKey.sign signedPrivateIdKey signKey.keyPairCsp
-        |> PrivateEncryptionKey
+    let create  =
+        let signedPrivateIdKey = SignedPrivateIdKey.create() |> SignedPrivateIdKey.toSignedPrivateIdKey
+        PrivateAccountKey.resign signedPrivateIdKey 
+        >> SignedPrivateIdKey
+        >> PrivateEncryptionKey
 
-    let validate (privateEncryptionKey : PrivateEncryptionKey)  =
-        let (PrivateEncryptionKey signedPrivateIdKey) = privateEncryptionKey
-        SignedPrivateIdKey.validate signedPrivateIdKey []
+    let toSignedPrivateIdKey (PrivateEncryptionKey privateEncryptionKey) =  privateEncryptionKey
 
-    let toSignedPrivateIdKey (PrivateEncryptionKey signedPrivateIdKey ) = signedPrivateIdKey
-        
+    let toSignedValue = toSignedPrivateIdKey >> SignedPrivateIdKey.toSignedPrivateIdKey
+
+    let toPrivateKey = 
+        toSignedPrivateIdKey
+        >> SignedPrivateIdKey.toPrivateKey
+
+    let toPublicKey = 
+        toSignedPrivateIdKey
+        >> SignedPrivateIdKey.toPrivateKey
+        >> PrivateKey.toPublicKey
+    
     let decrypt =
-        toSignedPrivateIdKey >> SignedPrivateIdKey.toPrivateIdKey >> PrivateIdKey.toKeyPairsCsp >> KeyPairCsp.decrypt
-      
-    let toByteArray  =
-        toSignedPrivateIdKey >> SignedPrivateIdKey.toPrivateIdKey >> PrivateIdKey.toKeyPairsCsp >> KeyPairCsp.toByteArray
+        toPrivateKey >> PrivateKey.decrypt
+
+    let isValid (privateEncryptionKey:  PrivateEncryptionKey) =
+        let signed = toSignedValue privateEncryptionKey
+        let signedPublicKey = toPublicKey privateEncryptionKey
+        PublicAccountKey.toPublicKey
+        >> fun accountPublicKey -> Signed.validate PrivateIdKey.toByteArray signed [signedPublicKey; accountPublicKey ]
+    
 
 type PublicEncryptionKey = private | PublicEncryptionKey of SignedPublicIdKey
 
@@ -152,32 +198,93 @@ module PublicEncryptionKey =
     let create (privateAccountKey: PrivateAccountKey) =
         PrivateEncryptionKey.toSignedPrivateIdKey
         >> SignedPublicIdKey.create 
-        >> (fun )
-module PrivateEncryptionKey =
-    let private create' =
-        PrivateIdKey.create >> PrivateEncryptionKey
+        >> SignedPublicIdKey.toSignedValue
+        >> (fun signedKey -> PrivateAccountKey.resign signedKey privateAccountKey)
+        >> SignedPublicIdKey
+        >> PublicEncryptionKey
+     
+    let toSignedPublicIdKey (PublicEncryptionKey signedPublicIdKey) = signedPublicIdKey
 
-    let private sign' (PrivateEncryptionKey PrivateIdKey) (PrivateAccountKey signKey) =
-        let signedPrivateIdKey = PrivateIdKey.sign PrivateIdKey signKey.keyPairCsp
-        PrivateEncryptionKey signedPrivateIdKey
+    let toSignedValue = toSignedPublicIdKey >> SignedPublicIdKey.toSignedValue
 
-    let create =
-        create'() |> sign'
-    let validate (PrivateEncryptionKey signedPrivateIdKey) (PublicAccountKey validateKey) =
-        PrivateIdKey.validate signedPrivateIdKey [ validateKey ]
+    let toPublicIdKey = toSignedPublicIdKey >> SignedPublicIdKey.toPublicIdKey
 
+    let toPublicKey = toSignedPublicIdKey >> SignedPublicIdKey.toPublicKey
+
+    let isValid  =
+        toSignedPublicIdKey 
+        >>  fun signedPublicKey -> PublicAccountKey.validate signedPublicKey
+
+    let encrypt =
+        toPublicKey
+        >> PublicKey.encrypt
+    
+
+
+type PrivateSignKey = private | PrivateSignKey of SignedPrivateIdKey
+
+module PrivateSignKey =
+
+    let create  =
+        let signedPrivateIdKey = SignedPrivateIdKey.create() |> SignedPrivateIdKey.toSignedPrivateIdKey
+        PrivateAccountKey.resign signedPrivateIdKey 
+        >> SignedPrivateIdKey
+        >> PrivateSignKey
+
+    let toSignedPrivateIdKey (PrivateSignKey privateEncryptionKey) =  privateEncryptionKey
+
+    let toSignedValue = toSignedPrivateIdKey >> SignedPrivateIdKey.toSignedPrivateIdKey
+
+    let toPrivateKey = 
+        toSignedPrivateIdKey
+        >> SignedPrivateIdKey.toPrivateKey
+
+    let toPublicKey = 
+        toSignedPrivateIdKey
+        >> SignedPrivateIdKey.toPrivateKey
+        >> PrivateKey.toPublicKey
+    
+    let isValid (privateEncryptionKey:  PrivateSignKey) =
+        let signed = toSignedValue privateEncryptionKey
+        let signedPublicKey = toPublicKey privateEncryptionKey
+        PublicAccountKey.toPublicKey
+        >> fun accountPublicKey -> Signed.validate PrivateIdKey.toByteArray signed [signedPublicKey; accountPublicKey ]
+
+    let resign value  =
+        toSignedPrivateIdKey >> SignedPrivateIdKey.resign value 
+
+    let sign map value =
+        toSignedPrivateIdKey >> SignedPrivateIdKey.sign map value
+
+    
+
+type PublicEncryptionKey = private | PublicEncryptionKey of SignedPublicIdKey
 
 module PublicEncryptionKey =
-    let create (PrivateEncryptionKey privateEncryptKey) (PrivateAccountKey signKey)  =
-        let publicCsp = KeyPairCsp.toPublicCsp privateEncryptKey.keyPairCsp
-        (PrivateAccountKey signKey)
+    
+    let create (privateAccountKey: PrivateAccountKey) =
+        PrivateEncryptionKey.toSignedPrivateIdKey
+        >> SignedPublicIdKey.create 
+        >> SignedPublicIdKey.toSignedValue
+        >> (fun signedKey -> PrivateAccountKey.resign signedKey privateAccountKey)
+        >> SignedPublicIdKey
+        >> PublicEncryptionKey
+     
+    let toSignedPublicIdKey (PublicEncryptionKey signedPublicIdKey) = signedPublicIdKey
 
-    let sign (PrivateEncryptionKey PrivateIdKey) (PrivateAccountKey signKey) =
-        let signedPrivateIdKey = PrivateIdKey.sign PrivateIdKey signKey.keyPairCsp
-        PrivateEncryptionKey signedPrivateIdKey
+    let toSignedValue = toSignedPublicIdKey >> SignedPublicIdKey.toSignedValue
 
-    let validate  (PrivateEncryptionKey signedKey) (PublicAccountKey validateKey) =
-        PrivateIdKey.validate signedKey [ validateKey ]
+    let toPublicIdKey = toSignedPublicIdKey >> SignedPublicIdKey.toPublicIdKey
+
+    let toPublicKey = toSignedPublicIdKey >> SignedPublicIdKey.toPublicKey
+
+    let isValid  =
+        toSignedPublicIdKey 
+        >>  fun signedPublicKey -> PublicAccountKey.validate signedPublicKey
+
+    let encrypt =
+        toPublicKey
+        >> PublicKey.encrypt
 
 
 type PublicLoginKey = private | PublicLoginKey of PublicIdKey
