@@ -8,37 +8,29 @@
     ]
 
 
-let maxFactorsForLevel factors level =
-    let factorList = List.concat factors
+let calculcateMaximalNumbersOfFactors  level =
     let rec calculateNumberOfFactors (state: int) level facList  =
         match facList with
         | head :: tail ->
             let newState = state * head
-            if newState > level then
-                1
-            else
-                1 + calculateNumberOfFactors newState level tail 
+            if newState > level then 1
+            else 1 + calculateNumberOfFactors newState level tail 
         | [] -> 0
-    calculateNumberOfFactors 1 level factorList
+    List.concat
+    >> calculateNumberOfFactors 1 level 
 
-let count = maxFactorsForLevel factors 1234 
-
-
+let count = calculcateMaximalNumbersOfFactors 1234 factors
 
 let getMaxSizedList count (list: 'a list)  =
-    if list.Length < count then
-        list
-    else
-        list |> List.take count 
+    if list.Length < count then list
+    else list |> List.take count 
 
-let getList = getMaxSizedList 2
 
-factors 
-|> List.map getList
-|> List.concat
-|> Seq.toList
-    
-    
+let calculateFactorsForCount count =
+     List.map (getMaxSizedList count)
+     >> List.concat
+     >> Seq.toList
+     
 
 let countToList count = 
     seq { for i = 1 to count do yield i }
@@ -46,34 +38,66 @@ let countToList count =
 
 let test = countToList 5 |> List.toArray
 
+type NrOfItemsInPermutation = | NrOfItemsInPermutation of int
+module NrOfItemsInPermutation =
+    let create = NrOfItemsInPermutation
+    let value (NrOfItemsInPermutation nr) = nr
+
+type MaxNumberOfFactors = | MaxNumberOfFactors of int
+module MaxNumberOfFactors =
+    let create = MaxNumberOfFactors
+    let value (MaxNumberOfFactors nr) = nr
 
 
-let rec permutaion index count state (arr: int[]) =
-    seq {
-        //
-        if count = 0 then
-            yield state
-        else
-            for i = index to (arr.Length - count + 1) do
-                let newState =  state @  [ arr.[i - 1] ]
-                yield! permutaion (index + 1) (count - 1) newState arr
-    }
+let getPermutaionsForList numberOfItemsInPermutation  =
+    let rec permutaion startIndex nrOfItems state (arr: int[]) =
+        seq {
+            //
+            if nrOfItems = 0 then
+                yield state
+            else
+                for i = startIndex to (arr.Length - nrOfItems + 1) do
+                    let newState =  state @  [ arr.[i - 1] ]
+                    yield! permutaion (startIndex + 1) (nrOfItems - 1) newState arr
+        }
+    permutaion 1 (NrOfItemsInPermutation.value numberOfItemsInPermutation) List.empty 
 
-let p = permutaion 1 5 List.empty test
+let getPermutations nrOfItemsInPermutaion =
+    MaxNumberOfFactors.value
+    >> countToList
+    >> List.toArray
+    >> getPermutaionsForList nrOfItemsInPermutaion
+
+ 
+let getMinFactorForPermutations prevFactor (factors: int[]) permutations   =
+    let getValueForPermutation =
+        List.fold (fun state index -> factors.[index - 1] * state) 1
+    let rec getMinimalFactor permutations =
+        match permutations with
+        | head :: tail ->
+            let factorValue = getValueForPermutation head 
+            if factorValue > prevFactor then
+                head,factorValue
+            else
+                getMinimalFactor tail
+        | [] -> [],0
+    getMinimalFactor permutations
+
+let getMinFactor maxNumberOfFactors prevFactor factors nrOfItemsInPermutation    =
+    getPermutations nrOfItemsInPermutation maxNumberOfFactors
+    |> Seq.toList
+    |> getMinFactorForPermutations prevFactor factors
+
+let getMinFactors prevFactor factors =
+    let maxFactorsCount = calculcateMaximalNumbersOfFactors prevFactor factors
+    let rec getAllFactors index =
+
+        
     
      
+//börja med att räkna ut maximalt antal faktorer
+let rec getFactorsSequence lastFactor factors = 
 
-let calculateMinFactor nr factors level =
-    let rec calculateMinFactor' state factors =
-        match factors with
-        | head :: tail ->
-            
-        | [] ->
-        
+//räkna ut lägsta faktor som är större än föregående
 
-let calculateMinFactor factors level =
-    let maxNrOfFactors = maxFactorsForLevel factors level
-    
-
-
-
+//räkna ut 
