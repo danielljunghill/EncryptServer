@@ -20,7 +20,25 @@ let maxFactorsForLevel factors level =
                 1 + calculateNumberOfFactors newState level tail 
         | [] -> 0
     calculateNumberOfFactors 1 level factorList
+
 let count = maxFactorsForLevel factors 1234 
+
+
+
+let getMaxSizedList count (list: 'a list)  =
+    if list.Length < count then
+        list
+    else
+        list |> List.take count 
+
+let getList = getMaxSizedList 2
+
+factors 
+|> List.map getList
+|> List.concat
+|> Seq.toList
+    
+    
 
 let countToList count = 
     seq { for i = 1 to count do yield i }
@@ -41,7 +59,7 @@ let rec permutaion index count state (arr: int[]) =
                 yield! permutaion (index + 1) (count - 1) newState arr
     }
 
-let p = permutaion 1 3 List.empty test
+let p = permutaion 1 5 List.empty test
     
      
 
