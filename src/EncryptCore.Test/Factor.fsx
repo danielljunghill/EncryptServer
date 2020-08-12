@@ -96,9 +96,34 @@ let calculateMinFactors factors prevFactor nrOfItemsInPermutation  =
     let permutations2 = getPermutations nrOfItemsInPermutation (MaxNumberOfFactors.create nrOfFactors) 
     getMinFactorForPermutations prevFactor (factorList |> List.toArray) permutations2
 
-let minFactors = calculateMinFactors factors 123 (NrOfItemsInPermutation.create 2)
+let minFactor,factorsInMinFactor = calculateMinFactors factors 123 (NrOfItemsInPermutation.create 2)
 
-let removeFacr
+let removeFactors factors   =
+    let removeFactorFromList factor factors =
+        match factors with
+        | head :: tail ->
+            if head = factor then
+                true,tail
+            else
+                false, factors
+        | [] -> true, []
+    let rec removeFactorFromLists factor factors =
+        match factors with
+        | head :: tail ->
+            let removed, rest = removeFactorFromList factor head
+            if removed then rest :: tail 
+            else head :: removeFactorFromLists factor tail
+        | [] -> []
+
+    List.fold (fun state toRemove -> removeFactorFromLists toRemove state) factors
+    >> List.filter (fun list -> list.Length > 0)
+
+
+let newFactors = removeFactors factors factorsInMinFactor
+
+
+
+       
 
 //let getMinFactor prevFactor  nrOfItemsInPermutation maxNumberOfFactors factors =
 //    let factorList = getListOfFactors 
