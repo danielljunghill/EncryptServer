@@ -1,10 +1,11 @@
 ﻿let factors =
     [ 
-        [ 2 ; 2 ; 2 ]
+        [ 2 ; 2 ; 2; 2 ;2 ; 2; 2]
         [ 3 ; 3 ; 3 ]
         [ 11 ; 11 ]
         [ 23 ]
-        [ 31 ]
+        [ 31 ; 31; 31; 31; 31; 31]
+        [ 57 ; 57; 57]
     ]
 
 type NrOfItemsInPermutation = private | NrOfItemsInPermutation of int
@@ -128,11 +129,33 @@ let getFactors prevFactor factors =
         let state = factorCount - 1
         if state <  0 then
             [ ]
-        else    
-            minfactor ::  calculateFactors (factorCount - 1)
-    calculateFactors (NrOfItemsInPermutation.value nrOfFactors)
+        else 
+            let min,_ = minfactor
+            if min = 0 then
+                calculateFactors (factorCount - 1)
+            else
+                minfactor ::  calculateFactors (factorCount - 1)
+    let result = calculateFactors (NrOfItemsInPermutation.value nrOfFactors)
+    if result.Length = 0 then
+        printfn " factors %A" factors
+        0, []
+    else
+        result |> List.minBy (fun (factor,_) -> factor)
 
-let factorList = getFactors 0 factors
+let factorList = getFactors 6 factors
+
+let getAllFactors factors =
+    let rec getAllFactors' prevFactor factors =
+        let (factor, factorList) = getFactors prevFactor factors
+        if factor = 0 then
+            printfn "%A" factorList
+            [ factorList |> List.fold (fun state i -> state * i)  1 ]
+        else
+            let state = removeFactors factors factorList
+            factor :: getAllFactors' factor  state
+    getAllFactors' 0 factors
+
+let factors1 = getAllFactors factors
 
        
 
@@ -142,7 +165,7 @@ let factorList = getFactors 0 factors
 //    |> Seq.toList
 //    |> getMinFactorForPermutations prevFactor factors
 
-
+let t = 54777  / (57 * 57 )
 
 
 //let getMinFactors prevFactor factors =
