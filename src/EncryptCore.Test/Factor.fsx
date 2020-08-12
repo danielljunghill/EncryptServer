@@ -25,25 +25,26 @@ let getMaxSizedList count (list: 'a list)  =
     if list.Length < count then list
     else list |> List.take count 
 
-
-let calculateFactorsForCount count =
+//gets list of factors 
+let getListOfFactors count  =
      List.map (getMaxSizedList count)
      >> List.concat
      >> Seq.toList
-     
 
+// 
 let countToList count = 
     seq { for i = 1 to count do yield i }
     |> Seq.toList
 
 let test = countToList 5 |> List.toArray
 
-type NrOfItemsInPermutation = | NrOfItemsInPermutation of int
+type NrOfItemsInPermutation = private | NrOfItemsInPermutation of int
 module NrOfItemsInPermutation =
     let create = NrOfItemsInPermutation
     let value (NrOfItemsInPermutation nr) = nr
 
-type MaxNumberOfFactors = | MaxNumberOfFactors of int
+
+type MaxNumberOfFactors = private | MaxNumberOfFactors of int
 module MaxNumberOfFactors =
     let create = MaxNumberOfFactors
     let value (MaxNumberOfFactors nr) = nr
@@ -66,9 +67,13 @@ let getPermutations nrOfItemsInPermutaion =
     MaxNumberOfFactors.value
     >> countToList
     >> List.toArray
-    >> getPermutaionsForList nrOfItemsInPermutaion
+    >> getPermutaionsForList nrOfItemsInPermutaion 
+    >> Seq.toList
 
- 
+let permutations = 
+    getPermutations (NrOfItemsInPermutation.create 3) (MaxNumberOfFactors.create 7) 
+    |> Seq.toList
+
 let getMinFactorForPermutations prevFactor (factors: int[]) permutations   =
     let getValueForPermutation =
         List.fold (fun state index -> factors.[index - 1] * state) 1
@@ -77,20 +82,32 @@ let getMinFactorForPermutations prevFactor (factors: int[]) permutations   =
         | head :: tail ->
             let factorValue = getValueForPermutation head 
             if factorValue > prevFactor then
-                head,factorValue
+                factorValue,head
             else
                 getMinimalFactor tail
-        | [] -> [],0
+        | [] -> 0,[]
     getMinimalFactor permutations
 
-let getMinFactor maxNumberOfFactors prevFactor factors nrOfItemsInPermutation    =
-    getPermutations nrOfItemsInPermutation maxNumberOfFactors
-    |> Seq.toList
-    |> getMinFactorForPermutations prevFactor factors
+let calculateMinFactors factors prevFactor nrOfItemsInPermutation  =
+    let nrOfItems = NrOfItemsInPermutation.value nrOfItemsInPermutation
+    let factorList = getListOfFactors nrOfItems factors
+    let nrOfFactors = factorList.Length
+    let permutations2 = getPermutations nrOfItemsInPermutation (MaxNumberOfFactors.create nrOfFactors) 
+    getMinFactorForPermutations prevFactor (factorList |> List.toArray) permutations2
 
-let getMinFactors prevFactor factors =
-    let maxFactorsCount = calculcateMaximalNumbersOfFactors prevFactor factors
-    let rec getAllFactors index =
+let minFactors = calculateMinFactors factors 123 (NrOfItemsInPermutation.create 2)
+//let getMinFactor prevFactor  nrOfItemsInPermutation maxNumberOfFactors factors =
+//    let factorList = getListOfFactors 
+//    getPermutations nrOfItemsInPermutation maxNumberOfFactors
+//    |> Seq.toList
+//    |> getMinFactorForPermutations prevFactor factors
+
+
+
+
+//let getMinFactors prevFactor factors =
+//    let maxFactorsCount = calculcateMaximalNumbersOfFactors prevFactor factors
+//    let rec getAllFactors index =
 
         
     
