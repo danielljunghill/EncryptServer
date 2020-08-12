@@ -1,12 +1,27 @@
-﻿let factors =
+﻿    //[ 
+    //    [ ;  ;]
+    //    [  ;  ;  ]
+    //    [  ;  ]
+    //    [  ]
+    //    [  ; ; 31; 31; 31]
+    //    [  ; 57; ]
+    //]
+
+
+
+
+let factors =
     [ 
-        [ 2 ; 2 ; 2; 2 ;2 ; 2; 2]
+        [ 2 ; 2 ; 2 ; 2 ; 2 ; 2 ; 2]
         [ 3 ; 3 ; 3 ]
         [ 11 ; 11 ]
         [ 23 ]
-        [ 31 ; 31; 31; 31; 31; 31]
-        [ 57 ; 57; 57]
+        [ 31 ; 31 ; 31 ; 31 ; 31 ; 31]
+        [ 57 ; 57 ; 57 ]
     ]
+
+let a = 31 * 57
+let b = 57 * 57 * 31 * 31
 
 type NrOfItemsInPermutation = private | NrOfItemsInPermutation of int
 module NrOfItemsInPermutation =
@@ -138,13 +153,29 @@ let getFactors prevFactor factors =
     let result = calculateFactors (NrOfItemsInPermutation.value nrOfFactors)
     if result.Length = 0 then
         printfn " factors %A" factors
-        0, []
+        0, factors |> List.concat |> Seq.toList
     else
         result |> List.minBy (fun (factor,_) -> factor)
 
-let factorList = getFactors 6 factors
 
-let getAllFactors factors =
+
+let verifyLastFactor  =
+    let veriftLastFactor' factors =
+        let checkLastFactor lastFactor restfactors =
+            match restfactors with
+            | head :: tail -> 
+                if head >= lastFactor then head * lastFactor :: tail
+                else lastFactor :: restfactors        
+            | [] ->  [ lastFactor ]
+                            
+        match factors with
+        | head :: tail -> checkLastFactor head tail
+        | [] -> []
+    List.rev
+    >> veriftLastFactor'
+    >> List.rev
+
+let getAllFactors  =
     let rec getAllFactors' prevFactor factors =
         let (factor, factorList) = getFactors prevFactor factors
         if factor = 0 then
@@ -153,7 +184,19 @@ let getAllFactors factors =
         else
             let state = removeFactors factors factorList
             factor :: getAllFactors' factor  state
-    getAllFactors' 0 factors
+    getAllFactors' 1 
+    >> verifyLastFactor
+
+let allFactors = getAllFactors factors
+
+
+
+verifyLastFactor [ 2 ; 3 ; 6; 7; 3 ]
+
+            
+                
+            
+            
 
 let factors1 = getAllFactors factors
 
