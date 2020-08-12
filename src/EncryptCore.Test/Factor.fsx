@@ -75,6 +75,7 @@ let permutations =
     |> Seq.toList
 
 let getMinFactorForPermutations prevFactor (factors: int[]) permutations   =
+    let getFactorValues = List.map (fun index -> factors.[index - 1])
     let getValueForPermutation =
         List.fold (fun state index -> factors.[index - 1] * state) 1
     let rec getMinimalFactor permutations =
@@ -82,7 +83,7 @@ let getMinFactorForPermutations prevFactor (factors: int[]) permutations   =
         | head :: tail ->
             let factorValue = getValueForPermutation head 
             if factorValue > prevFactor then
-                factorValue,head
+                factorValue,getFactorValues head
             else
                 getMinimalFactor tail
         | [] -> 0,[]
@@ -96,6 +97,9 @@ let calculateMinFactors factors prevFactor nrOfItemsInPermutation  =
     getMinFactorForPermutations prevFactor (factorList |> List.toArray) permutations2
 
 let minFactors = calculateMinFactors factors 123 (NrOfItemsInPermutation.create 2)
+
+let removeFacr
+
 //let getMinFactor prevFactor  nrOfItemsInPermutation maxNumberOfFactors factors =
 //    let factorList = getListOfFactors 
 //    getPermutations nrOfItemsInPermutation maxNumberOfFactors
