@@ -6,13 +6,13 @@
         [ 23 ]
         [ 31 ; 31 ; 31 ; 31 ; 31 ; 31]
         [ 57 ; 57 ; 57; 57; 57]
+        [ 67 ]
       
     ]
 
 module Seq =
     let getIntegers startInt endInt =
         seq { for i = startInt to endInt do yield i }
-
 
 type  PermutationSize =  private | PermutationSize of int
 module private PermutationSize =
@@ -67,12 +67,10 @@ module List =
     let multiply  =
         List.fold (fun state i -> state * i) 1
 
-
 type Factor =  
     private | Factor of int list
             | Rest of int list
             
-
 module Factor =
     let toIntList factor =
         match factor with
@@ -80,10 +78,6 @@ module Factor =
         | Rest ls -> ls
 
     let toInt = toIntList >> List.multiply
-
-    let merge factor1 factor2 =
-        let newList = toIntList factor1 @ toIntList factor2 |> List.sortBy (fun i -> i)
-        Factor newList
    
     let private tryGetMin prevFactor (factors: int[])  =
         let getFactorValues = List.map (fun index -> factors.[index - 1])
@@ -136,13 +130,11 @@ module Factor =
             let minFactor = tryGetMinFactor factors prevFactor (PermutationSize.create factorCount)
             let state = factorCount - 1
             if state <  0 then
-                printfn "asdadsasda"
                 [ ]
             else 
                 match minFactor with
                 | None -> calculateFactors (factorCount - 1)
                 | Some factor -> factor ::  calculateFactors (factorCount - 1)
-             
                     
         let result = calculateFactors (PermutationSize.value permutationSize)
         if result.Length = 0 then
@@ -150,34 +142,6 @@ module Factor =
             Rest factorList
         else
             result |> List.minBy (fun factor -> toInt factor)
-           
-    //let private verifyLastFactor  =
-    //    let veriftLastFactor' factors =
-    //        let checkLastFactor lastFactor restfactors =
-    //            match restfactors with
-    //            | head :: tail -> 
-    //                if (toInt head) >= (toInt lastFactor) then merge head lastFactor :: tail
-    //                else lastFactor :: restfactors        
-    //            | [] ->  [ lastFactor ]
-                        
-    //        match factors with
-    //        | head :: tail -> checkLastFactor head tail
-    //        | [] -> []
-    //    List.rev
-    //    >> veriftLastFactor'
-    //    >> List.rev
-    //let private verifyLastFactor  =
-    //    let tryMergeFirst factors =
-    //        match factors with
-    //        | head :: tail -> 
-    //            match head with
-    //            | Rest _ -> 
-    //                merge head tail.Head :: tail.Tail
-    //            | Factor _ -> factors
-    //        | [] -> factors
-    //    List.rev 
-    //    >>  tryMergeFirst
-    //    >> List.rev
      
     let calculateOptimalFactors  =
         let rec getAllFactors' prevFactor factors =
@@ -192,38 +156,3 @@ module Factor =
 let allFactors = Factor.calculateOptimalFactors factors
 
 
-
-//verifyLastFactor [ 2 ; 3 ; 6; 7; 3 ]
-
-        
-            
-        
-        
-
-//let factors1 = getAllFactors factors
-//factors1.Length
-
-   
-
-//let getMinFactor prevFactor  nrOfItemsInPermutation maxNumberOfFactors factors =
-//    let factorList = getListOfFactors 
-//    getPermutations nrOfItemsInPermutation maxNumberOfFactors
-//    |> Seq.toList
-//    |> getMinFactorForPermutations prevFactor factors
-
-
-
-
-//let getMinFactors prevFactor factors =
-//    let maxFactorsCount = calculcateMaximalNumbersOfFactors prevFactor factors
-//    let rec getAllFactors index =
-
-    
-
- 
-//börja med att räkna ut maximalt antal faktorer
-//let rec getFactorsSequence lastFactor factors = 
-
-//räkna ut lägsta faktor som är större än föregående
-
-//räkna ut 
