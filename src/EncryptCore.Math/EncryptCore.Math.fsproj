@@ -5,7 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <None Include="Prime.fsx" />
+    <Compile Include="Factorization.fs" />
+    <None Include="factor.fsx" />
   </ItemGroup>
 
 </Project>

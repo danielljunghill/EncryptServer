@@ -17,7 +17,8 @@ let factors =
         [ 11 ; 11 ]
         [ 23 ]
         [ 31 ; 31 ; 31 ; 31 ; 31 ; 31]
-        [ 57 ; 57 ; 57 ]
+        [ 57 ; 57 ; 57; ]
+      
     ]
 
 let a = 31 * 57
@@ -157,8 +158,6 @@ let getFactors prevFactor factors =
     else
         result |> List.minBy (fun (factor,_) -> factor)
 
-
-
 let verifyLastFactor  =
     let veriftLastFactor' factors =
         let checkLastFactor lastFactor restfactors =
@@ -199,6 +198,7 @@ verifyLastFactor [ 2 ; 3 ; 6; 7; 3 ]
             
 
 let factors1 = getAllFactors factors
+factors1.Length
 
        
 
@@ -208,7 +208,7 @@ let factors1 = getAllFactors factors
 //    |> Seq.toList
 //    |> getMinFactorForPermutations prevFactor factors
 
-let t = 54777  / (57 * 57 )
+
 
 
 //let getMinFactors prevFactor factors =
