@@ -25,7 +25,7 @@ module NotEmptyArray =
         | len when len = 0 -> None
         | len when len = 1 -> nea.first
         | _ -> nea.rest.[nea.rest.Length - 2]
-    let toArray (nea: NotEmptyArray<_>) = Array.append [| nea.first |] nea.rest
+    let toArray (nea: NotEmptyArray<_>) = Array.append [| nea.first |] nea.rest 
     let toList = toArray >> Array.toList
 
            
@@ -36,6 +36,7 @@ type Signed<'T> =
     }
 
 module Signed =
+
     type SignatureWithByteArray =
         {
             signedByteArray: byte[]
@@ -44,35 +45,57 @@ module Signed =
     module SignatureWithByteArray =
 
         let verify (swba:SignatureWithByteArray)  publicCps =
+
+            printfn "verify %A" swba.signedByteArray
+            printfn "signature %A" swba.signature
             Signature.Verify.byteArray publicCps swba.signature swba.signedByteArray
 
         let getListFromSigned map (signedValue: Signed<_>) =
             let rec getListFromSignatures signedByteArrays =
                 match signedByteArrays with
-                | head :: [] -> 
+                | head :: [] ->        
                     [ { signedByteArray = signedValue.value |> map ; signature = head } ]
-                | head :: tail ->
-                    { signedByteArray = ByteArraySignature.toByteArray tail.Head ; signature = head } :: getListFromSignatures tail
+                | head :: tail ->         
+                    { signedByteArray = ByteArraySignature.toByteArray tail.Head; signature = head } :: getListFromSignatures tail
                 | [] -> []
-            getListFromSignatures (NotEmptyArray.toList signedValue.signatures)
+            getListFromSignatures (NotEmptyArray.toList signedValue.signatures |> List.rev)
 
+    let sign privateKey signed  =
+        //take bytearray for last signature
+        let btsToSign = NotEmptyArray.last signed.signatures |> ByteArraySignature.toByteArray  
+        printfn "signing %A" btsToSign
+        //sign bytearray with 
+        let signature = Signature.Sign.byteArray256 privateKey btsToSign
+        printfn "signature %A" signature
+        //add signature to list of signatures
+        { signed with signatures = NotEmptyArray.add signature signed.signatures } 
+
+    let rec signMany privateKeys signed  =
+        match privateKeys with
+        | key :: [] -> sign key signed 
+        | key :: tail -> 
+            let newSigned = sign key signed 
+            signMany tail newSigned 
+    
+        | [] ->  System.Exception("No keys provided when signing many") |> raise
+        
 
      //create Signed and add first signature of original value            
-    let createAndSign map value privateKey  =
+    let createAndSign privateKey map value   =
+        let btsToSign = (map value) 
+        printfn "signing %A" btsToSign
+        let signature = Signature.Sign.byteArray256 privateKey btsToSign  |> NotEmptyArray.create
+        printfn "signature %A" signature
+
         {
             value = value 
-            signatures =   Signature.Sign.byteArray256 privateKey (map value) |> NotEmptyArray.create
+            signatures =   signature
         }
 
 
 
-    let sign signed privateKey =
-        //take bytearray for last signature
-        let btsToSign = NotEmptyArray.last signed.signatures |> ByteArraySignature.toByteArray  
-        //sign bytearray with 
-        let signature = Signature.Sign.byteArray256 privateKey btsToSign
-        //add signature to list of signatures
-        { signed with signatures = NotEmptyArray.add signature signed.signatures } 
+        
+     
 
     type ValidateResult<'T> =
         | PartlyValid of Signed<'T>
@@ -96,7 +119,7 @@ module Signed =
                     else
                         false
                 | [] -> true
-            validate' (List.zip swbas publicKeys)
+            validate' (List.zip swbas (publicKeys |> List.rev) )
 
 
 

@@ -9,6 +9,6 @@ type TestClass () =
 
     [<TestMethod>]
     member this.TestMethodPassing () =
-        let clientIdentity = ClientIdentity.create
-        printfn "%A" clientIdentity
+        //let clientIdentity = ClientIdentity.create
+        //printfn "%A" clientIdentity
         Assert.IsTrue(true);

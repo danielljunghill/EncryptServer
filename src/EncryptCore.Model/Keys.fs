@@ -39,7 +39,7 @@ module PrivateIdKey =
     let toPrivateKey (privateIdKey: PrivateIdKey) = privateIdKey.privateKey
     let create() =
         { id = KeyId.create(); privateKey = PrivateKey.create() }
-    let toPublicCsp (privateIdKey: PrivateIdKey) = PrivateKey.toPublicKey privateIdKey.privateKey
+    let toPublicKey (privateIdKey: PrivateIdKey) = PrivateKey.toPublicKey privateIdKey.privateKey
 
 type PublicIdKey =
     {
@@ -62,7 +62,7 @@ module SignedPrivateIdKey =
 
     let fromPrivateIdKey (privateIdKey: PrivateIdKey)  =
         let signKey =  privateIdKey.privateKey
-        let signed = Signed.createAndSign PrivateIdKey.toByteArray privateIdKey signKey
+        let signed = Signed.createAndSign signKey PrivateIdKey.toByteArray privateIdKey 
         SignedPrivateIdKey signed
     let create =
         PrivateIdKey.create
@@ -72,13 +72,13 @@ module SignedPrivateIdKey =
     let toPrivateKey = toPrivateIdKey >> (fun signedKey -> signedKey.privateKey)
     let toId = toPrivateIdKey >> (fun signedKey -> signedKey.id)
     let resign<'T> (signed:Signed<'T>) (SignedPrivateIdKey signedKey) =
-        Signed.sign signed signedKey.value.privateKey
+        Signed.sign signedKey.value.privateKey signed 
     let sign map value =     
         toPrivateKey >>
-        Signed.createAndSign map value 
+        fun privateKey -> Signed.createAndSign privateKey map value 
     let isValid  =
         toSignedPrivateIdKey
-        >> fun value -> Signed.validate PrivateIdKey.toByteArray value
+        >> fun value -> Signed.validate PrivateIdKey.toByteArray value [ PrivateIdKey.toPublicKey value.value ]
 
 module SignedPublicIdKey =
 
@@ -277,7 +277,7 @@ type PublicAccount =
     
 module  PrivateAccount =
     
-    let create =
+    let create() =
         let privateAccountKey = PrivateAccountKey.create()
         {
             PrivateAccount.accountKey = privateAccountKey

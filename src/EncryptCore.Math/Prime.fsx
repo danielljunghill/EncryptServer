@@ -74,7 +74,7 @@ let getPrimes maxValue =
 
 
 
-let t = getPrimes 123112
+let t = getPrimes 1231121
 
 //let r = 11 % 5
 
